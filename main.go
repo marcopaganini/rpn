@@ -29,7 +29,12 @@ type (
 		savedList []float64
 	}
 
-	// ophandler contains a single operation item.
+	// ophandler contains the handler for a single operation.  numArgs
+	// indicates how many items at the top of the stack should be popped and
+	// sent to the function. ignoreResult will cause the function return to be
+	// ignored (i.e, not be repushed into the stack and the top of the stack
+	// won't be printed afterwards. This is used for commands like "show stack"
+	// that don't change the stack at all.
 	ophandler struct {
 		numArgs      int  // Number of arguments to function
 		ignoreResult bool // Ignore results from function
@@ -175,7 +180,7 @@ func main() {
 		line = strings.TrimSpace(line)
 
 		// Split into fields and process
-		opdone := false
+		autoprint := false
 		for _, token := range strings.Fields(line) {
 			if isNumber(token) {
 				n, err := atof(token)
@@ -197,10 +202,10 @@ func main() {
 					stack.restore()
 					break
 				}
-				// If the particular handler does not ignore results
-				// from the function, set opdone to true. This will
-				// cause the top of the stack results to be printed.
-				opdone = !handler.ignoreResult
+				// If the particular handler does not ignore results from the
+				// function, set autoprint to true. This will cause the top of
+				// the stack results to be printed.
+				autoprint = !handler.ignoreResult
 				continue
 			}
 
@@ -211,11 +216,11 @@ func main() {
 
 			// Unrecognized number or token.
 			fmt.Printf("Unknown operation: %q\n", token)
-			opdone = false
+			autoprint = false
 			stack.restore()
 			break
 		}
-		if opdone {
+		if autoprint {
 			fmt.Println("=", stack.top())
 		}
 	}
