@@ -173,9 +173,15 @@ func main() {
 
 		// stack operations
 		"p": {"Display stack", 0, true, func(_ []float64) (float64, error) { stack.print(); return 0, nil }},
-		"c": {"Clear stack", 0, true, func(_ []float64) (float64, error) { stack.clear(); return 0, nil }},
+		"clr": {"Clear stack", 0, true, func(_ []float64) (float64, error) { stack.clear(); return 0, nil }},
 		"=": {"Print top of stack (x)", 0, true, func(_ []float64) (float64, error) { fmt.Println(stack.top()); return 0, nil }},
 		"d": {"Drop top of stack (x)", 1, true, func(_ []float64) (float64, error) { return 0, nil }},
+
+        // math & physical constants
+        "pi":  {"The famous transcedental number", 0, false, func(_ []float64) (float64, error)    { return 3.1415926536, nil }},
+        "e":   {"Another famous transcedental number", 0, false, func(_ []float64) (float64, error) { return 2.7182818284, nil }},
+        "c":   {"Speed of light in vacuum, in m/s", 0, false, func(_ []float64) (float64, error) { return 299792458, nil }},
+        "mol": {"Avogadro's number", 0, false, func(_ []float64) (float64, error) { return 6.02214154e23, nil }},
 
 		// program control
 		"debug": {"Toggle debugging", 0, true, func(_ []float64) (float64, error) {
