@@ -29,18 +29,22 @@ type (
 
 // Stack functions.
 
+// save saves the current stack in a separate structure.
 func (x *stackType) save() {
 	x.savedList = append([]float64{}, x.list...)
 }
 
+// restore restores the saved stack back into the main one.
 func (x *stackType) restore() {
 	x.list = append([]float64{}, x.savedList...)
 }
 
+// push adds a new element to the stack.
 func (x *stackType) push(n float64) {
 	x.list = append(x.list, n)
 }
 
+// operation performs an operation on the stack.
 func (x *stackType) operation(fn func(float64, float64) (float64, error)) error {
 	length := len(x.list)
 	if length < 2 {
@@ -58,6 +62,7 @@ func (x *stackType) operation(fn func(float64, float64) (float64, error)) error 
 	return nil
 }
 
+// top returns the topmost element on the stack (without popping it).
 func (x *stackType) top() float64 {
 	if len(x.list) == 0 {
 		return 0
@@ -65,6 +70,7 @@ func (x *stackType) top() float64 {
 	return x.list[len(x.list)-1]
 }
 
+// printStacks prints the stacks (primary and backup).
 func (x *stackType) printStacks() {
 	length := len(x.list)
 	fmt.Println("===== Stack =====")
@@ -77,11 +83,13 @@ func (x *stackType) printStacks() {
 	}
 }
 
+// isNumber returns true if the string appears to be a number.
 func isNumber(s string) bool {
 	_, err := strconv.ParseFloat(s, 64)
 	return err == nil
 }
 
+// atof converts a string to a float.
 func atof(s string) (float64, error) {
 	n, err := strconv.ParseFloat(s, 64)
 	if err != nil {
