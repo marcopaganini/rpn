@@ -159,6 +159,18 @@ func main() {
 		"mod":   {"Calculates y modulo x", 2, false, func(a []float64) (float64, error) { return math.Mod(a[0], a[1]), nil }},
 		"%": {"Calculate x% of y", 2, false, func(a []float64) (float64, error) { return a[0] * a[1] / 100, nil }},
 
+        "fac": {"Calculate factorial of x", 1, false, func(a []float64) (float64, error) {
+            var x = uint64(a[0])
+            if (x <= 0) {
+                return 0, errors.New("fact requires a positive number")
+            }
+            var fact = uint64(1)
+            for ix := uint64(1); ix <= x; ix++ {
+			    fact *= ix
+		    }
+            return float64(fact), nil
+		  }},
+
 		// stack operations
 		"p": {"Display stack", 0, true, func(_ []float64) (float64, error) { stack.print(); return 0, nil }},
 		"c": {"Clear stack", 0, true, func(_ []float64) (float64, error) { stack.clear(); return 0, nil }},
