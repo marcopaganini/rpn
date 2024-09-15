@@ -160,7 +160,7 @@ func main() {
 		"pct": {"Calculate x% of y", 2, false, func(a []float64) (float64, error) { return a[0] * a[1] / 100, nil }},
 
 		// stack operations
-		"s": {"Display stack", 0, true, func(_ []float64) (float64, error) { stack.print(); return 0, nil }},
+		"p": {"Display stack", 0, true, func(_ []float64) (float64, error) { stack.print(); return 0, nil }},
 		"c": {"Clear stack", 0, true, func(_ []float64) (float64, error) { stack.clear(); return 0, nil }},
 		"=": {"Print top of stack (x)", 0, true, func(_ []float64) (float64, error) { fmt.Println(stack.top()); return 0, nil }},
 
