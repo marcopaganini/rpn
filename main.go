@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -17,7 +18,8 @@ import (
 
 var (
 	// Build is filled by go build -ldflags during build.
-	Build string
+	Build       string
+	programName = "rcalc"
 )
 
 type (
@@ -36,8 +38,9 @@ type (
 	// won't be printed afterwards. This is used for commands like "show stack"
 	// that don't change the stack at all.
 	ophandler struct {
-		numArgs      int  // Number of arguments to function
-		ignoreResult bool // Ignore results from function
+		desc         string // operation description (used by help)
+		numArgs      int    // Number of arguments to function
+		ignoreResult bool   // Ignore results from function
 		fn           func([]float64) (float64, error)
 	}
 )
@@ -130,27 +133,27 @@ func main() {
 	// Operations
 	ops := map[string]ophandler{
 		// Basic operations
-		"+": {2, false, func(a []float64) (float64, error) { return a[0] + a[1], nil }},
-		"-": {2, false, func(a []float64) (float64, error) { return a[0] - a[1], nil }},
-		"*": {2, false, func(a []float64) (float64, error) { return a[0] * a[1], nil }},
-		"/": {2, false, func(a []float64) (float64, error) {
+		"+": {"Add x to y", 2, false, func(a []float64) (float64, error) { return a[0] + a[1], nil }},
+		"-": {"Subtracy x from y", 2, false, func(a []float64) (float64, error) { return a[0] - a[1], nil }},
+		"*": {"Multiply x and y", 2, false, func(a []float64) (float64, error) { return a[0] * a[1], nil }},
+		"/": {"Divide y by x", 2, false, func(a []float64) (float64, error) {
 			if a[1] == 0 {
 				return 0, errors.New("can't divide by zero")
 			}
 			return a[0] / a[1], nil
 		}},
-		"chs": {1, false, func(a []float64) (float64, error) { return a[0] * -1, nil }},
-		"inv": {1, false, func(a []float64) (float64, error) { return 1 / a[0], nil }},
-		"^":   {2, false, func(a []float64) (float64, error) { return math.Pow(a[0], a[1]), nil }},
-		"%":   {2, false, func(a []float64) (float64, error) { return math.Mod(a[0], a[1]), nil }},
-		"pct": {2, false, func(a []float64) (float64, error) { return a[0] * (1 + a[1]/100), nil }},
+		"chs": {"Change signal of x", 1, false, func(a []float64) (float64, error) { return a[0] * -1, nil }},
+		"inv": {"Invert x (1/x)", 1, false, func(a []float64) (float64, error) { return 1 / a[0], nil }},
+		"^":   {"Raise y to the power of x", 2, false, func(a []float64) (float64, error) { return math.Pow(a[0], a[1]), nil }},
+		"%":   {"Calculates y modulo x", 2, false, func(a []float64) (float64, error) { return math.Mod(a[0], a[1]), nil }},
+		"pct": {"Calculate x% of y", 2, false, func(a []float64) (float64, error) { return a[0] * a[1] / 100, nil }},
 
 		// stack operations
-		"s": {0, true, func(_ []float64) (float64, error) { stack.print(); return 0, nil }},
-		"c": {0, true, func(_ []float64) (float64, error) { stack.clear(); return 0, nil }},
+		"s": {"Display stack", 0, true, func(_ []float64) (float64, error) { stack.print(); return 0, nil }},
+		"c": {"Clear stack", 0, true, func(_ []float64) (float64, error) { stack.clear(); return 0, nil }},
 
 		// program control
-		"debug": {0, true, func(_ []float64) (float64, error) {
+		"debug": {"Toggle debugging", 0, true, func(_ []float64) (float64, error) {
 			debug = !debug
 			fmt.Printf("Debugging state: %v\n", debug)
 			return 0, nil
@@ -206,6 +209,32 @@ func main() {
 				// function, set autoprint to true. This will cause the top of
 				// the stack results to be printed.
 				autoprint = !handler.ignoreResult
+				continue
+			}
+
+			// Help
+			if token == "help" || token == "h" || token == "?" {
+				fmt.Printf("Online help for %s\n", programName)
+				fmt.Println("Please note:")
+				fmt.Println("  - x means the number at the top of the stack")
+				fmt.Println("  - y means the second number from the top of the stack")
+				fmt.Println()
+				fmt.Println("Data entry:")
+				fmt.Println("  number <ENTER> - push a number on top of the stack.")
+				fmt.Println("  operation <ENTER> - perform an operation on the stack (see below).")
+				fmt.Println()
+				fmt.Println("It's also possible to separate multiple operations with space:")
+				fmt.Println("  10 2 3 + - (result = 4)")
+				fmt.Println()
+				fmt.Printf("Operations:\n")
+
+				var keys []string
+				for k := range ops {
+					keys = append(keys, k)
+				}
+				for _, k := range sort.StringSlice(keys) {
+					fmt.Printf("  - %s: %s\n", k, ops[k].desc)
+				}
 				continue
 			}
 
