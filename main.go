@@ -161,6 +161,7 @@ func main() {
 		// stack operations
 		"s": {"Display stack", 0, true, func(_ []float64) (float64, error) { stack.print(); return 0, nil }},
 		"c": {"Clear stack", 0, true, func(_ []float64) (float64, error) { stack.clear(); return 0, nil }},
+		"=": {"Print top of stack (x)", 0, true, func(_ []float64) (float64, error) { fmt.Println(stack.top()); return 0, nil }},
 
 		// program control
 		"debug": {"Toggle debugging", 0, true, func(_ []float64) (float64, error) {
