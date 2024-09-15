@@ -82,9 +82,12 @@ func (x *stackType) operation(handler ophandler) error {
 	if err != nil {
 		return err
 	}
-	// Remove the number of arguments this operation consumes and adds the return
-	// from the function to the stack.
-	x.list = x.list[0 : length-handler.numArgs]
+	// Remove the number of arguments this operation consumes if needed.
+	if len(x.list) > 0 {
+		x.list = x.list[0 : length-handler.numArgs]
+	}
+	// Add the return from the function to the stack if ignoreResult = false.
+	// Re-check stack length first, as the function may have changed it.
 	if !handler.ignoreResult {
 		x.push(ret)
 	}
