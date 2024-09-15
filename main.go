@@ -156,8 +156,8 @@ func main() {
 		"chs": {"Change signal of x", 1, false, func(a []float64) (float64, error) { return a[0] * -1, nil }},
 		"inv": {"Invert x (1/x)", 1, false, func(a []float64) (float64, error) { return 1 / a[0], nil }},
 		"^":   {"Raise y to the power of x", 2, false, func(a []float64) (float64, error) { return math.Pow(a[0], a[1]), nil }},
-		"%":   {"Calculates y modulo x", 2, false, func(a []float64) (float64, error) { return math.Mod(a[0], a[1]), nil }},
-		"pct": {"Calculate x% of y", 2, false, func(a []float64) (float64, error) { return a[0] * a[1] / 100, nil }},
+		"mod":   {"Calculates y modulo x", 2, false, func(a []float64) (float64, error) { return math.Mod(a[0], a[1]), nil }},
+		"%": {"Calculate x% of y", 2, false, func(a []float64) (float64, error) { return a[0] * a[1] / 100, nil }},
 
 		// stack operations
 		"p": {"Display stack", 0, true, func(_ []float64) (float64, error) { stack.print(); return 0, nil }},
