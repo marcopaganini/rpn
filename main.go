@@ -145,7 +145,7 @@ func main() {
 	ops := map[string]ophandler{
 		// Basic operations
 		"+": {"Add x to y", 2, false, func(a []float64) (float64, error) { return a[0] + a[1], nil }},
-		"-": {"Subtracy x from y", 2, false, func(a []float64) (float64, error) { return a[0] - a[1], nil }},
+		"-": {"Subtract x from y", 2, false, func(a []float64) (float64, error) { return a[0] - a[1], nil }},
 		"*": {"Multiply x and y", 2, false, func(a []float64) (float64, error) { return a[0] * a[1], nil }},
 		"/": {"Divide y by x", 2, false, func(a []float64) (float64, error) {
 			if a[1] == 0 {
