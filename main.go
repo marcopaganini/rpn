@@ -104,10 +104,17 @@ func (x *stackType) top() float64 {
 
 // print display the contents of the stack.
 func (x *stackType) print() {
-	length := len(x.list)
+	last := len(x.list) - 1
 	fmt.Println("===== Stack =====")
-	for ix := length - 1; ix >= 0; ix-- {
-		fmt.Printf("%d: %f\n", ix, x.list[ix])
+	for ix := last; ix >= 0; ix-- {
+		tag := fmt.Sprintf("%2d", ix)
+		switch ix {
+		case last:
+			tag = " x"
+		case last - 1:
+			tag = " y"
+		}
+		fmt.Printf("%s: %f\n", tag, x.list[ix])
 	}
 }
 
