@@ -20,11 +20,19 @@ var (
 )
 
 type (
+	// stackType holds the representation of the RPN stack. It contains
+	// two stacks, "list" (the main stack), and "savedList", which is
+	// used to save the stack and later restore it in case of error.
 	stackType struct {
 		list      []float64
 		savedList []float64
 	}
-	opfunc func(float64, float64) (float64, error)
+
+	// ophandler contains a single operation item.
+	ophandler struct {
+		numArgs int
+		fn      func([]float64) (float64, error)
+	}
 )
 
 // Stack functions.
@@ -45,19 +53,23 @@ func (x *stackType) push(n float64) {
 }
 
 // operation performs an operation on the stack.
-func (x *stackType) operation(fn func(float64, float64) (float64, error)) error {
+func (x *stackType) operation(handler ophandler) error {
+	// Make sure we have enough arguments in the list.
 	length := len(x.list)
-	if length < 2 {
-		return errors.New("this operation needs at least two items in the stack")
+	if length < handler.numArgs {
+		return fmt.Errorf("this operation requires at least %d items in the stack", handler.numArgs)
 	}
-	last := x.list[length-1]
-	beforeLast := x.list[length-2]
 
-	ret, err := fn(beforeLast, last)
+	// args contains a copy of the last numArgs in the stack.
+	args := append([]float64{}, x.list[length-handler.numArgs:]...)
+
+	ret, err := handler.fn(args)
 	if err != nil {
 		return err
 	}
-	x.list = x.list[0 : length-2]
+	// Remove the number of arguments this operation consumes and adds the return
+	// from the function to the stack.
+	x.list = x.list[0 : length-handler.numArgs]
 	x.push(ret)
 	return nil
 }
@@ -104,16 +116,16 @@ func main() {
 	)
 
 	// Operations
-	ops := map[string]opfunc{
-		"+": func(a, b float64) (float64, error) { return a + b, nil },
-		"-": func(a, b float64) (float64, error) { return a - b, nil },
-		"*": func(a, b float64) (float64, error) { return a * b, nil },
-		"/": func(a, b float64) (float64, error) {
-			if b == 0 {
+	ops := map[string]ophandler{
+		"+": {2, func(a []float64) (float64, error) { return a[0] + a[1], nil }},
+		"-": {2, func(a []float64) (float64, error) { return a[0] - a[1], nil }},
+		"*": {2, func(a []float64) (float64, error) { return a[0] * a[1], nil }},
+		"/": {2, func(a []float64) (float64, error) {
+			if a[1] == 0 {
 				return 0, errors.New("can't divide by zero")
 			}
-			return a / b, nil
-		},
+			return a[0] / a[1], nil
+		}},
 	}
 
 	stack := &stackType{}
@@ -155,9 +167,9 @@ func main() {
 			}
 
 			// Check operator map
-			fn, ok := ops[token]
+			handler, ok := ops[token]
 			if ok {
-				err := stack.operation(fn)
+				err := stack.operation(handler)
 				if err != nil {
 					fmt.Println("ERROR:", err)
 					stack.restore()
