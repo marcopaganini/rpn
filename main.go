@@ -145,7 +145,7 @@ func main() {
 	ops := map[string]ophandler{
 		// Basic operations
 		"+": {"Add x to y", 2, false, func(a []float64) (float64, error) { return a[0] + a[1], nil }},
-		"-": {"Subtracy x from y", 2, false, func(a []float64) (float64, error) { return a[0] - a[1], nil }},
+		"-": {"Subtract x from y", 2, false, func(a []float64) (float64, error) { return a[0] - a[1], nil }},
 		"*": {"Multiply x and y", 2, false, func(a []float64) (float64, error) { return a[0] * a[1], nil }},
 		"/": {"Divide y by x", 2, false, func(a []float64) (float64, error) {
 			if a[1] == 0 {
@@ -163,6 +163,7 @@ func main() {
 		"s": {"Display stack", 0, true, func(_ []float64) (float64, error) { stack.print(); return 0, nil }},
 		"c": {"Clear stack", 0, true, func(_ []float64) (float64, error) { stack.clear(); return 0, nil }},
 		"=": {"Print top of stack (x)", 0, true, func(_ []float64) (float64, error) { fmt.Println(stack.top()); return 0, nil }},
+		"p": {"Print full stack", 0, true, func(_ []float64) (float64, error) { stack.print(); return 0, nil }},
 
 		// program control
 		"debug": {"Toggle debugging", 0, true, func(_ []float64) (float64, error) {
