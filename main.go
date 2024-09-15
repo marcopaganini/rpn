@@ -1,4 +1,4 @@
-// This file is part of rcalc, a silly RPN calculator for the CLI.
+// This file is part of rpn, a silly RPN calculator for the CLI.
 // For further information, check https://github.com/marcopaganini/rcalc
 //
 // (C) 2024 by Marco Paganini <paganini AT paganini DOT net>
@@ -20,7 +20,7 @@ import (
 var (
 	// Build is filled by go build -ldflags during build.
 	Build       string
-	programName = "rcalc"
+	programName = "rpn"
 )
 
 type (

@@ -25,4 +25,4 @@ go.work.sum
 *.swp
 
 # The binary itself
-rcalc
+rpn

@@ -1,4 +1,4 @@
-module github.com/marcopaganini/rcalc
+module github.com/marcopaganini/rpn
 
 go 1.22.6
 
