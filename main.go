@@ -226,9 +226,6 @@ func main() {
 			// Help
 			if token == "help" || token == "h" || token == "?" {
 				fmt.Printf("Online help for %s\n", programName)
-				fmt.Println("Please note:")
-				fmt.Println("  - x means the number at the top of the stack")
-				fmt.Println("  - y means the second number from the top of the stack")
 				fmt.Println()
 				fmt.Println("Data entry:")
 				fmt.Println("  number <ENTER> - push a number on top of the stack.")
@@ -246,6 +243,10 @@ func main() {
 				for _, k := range sort.StringSlice(keys) {
 					fmt.Printf("  - %s: %s\n", k, ops[k].desc)
 				}
+				fmt.Println()
+				fmt.Println("Please Note:")
+				fmt.Println("  - x means the number at the top of the stack")
+				fmt.Println("  - y means the second number from the top of the stack")
 				continue
 			}
 
