@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math"
 	"strconv"
 	"strings"
 
@@ -30,8 +31,9 @@ type (
 
 	// ophandler contains a single operation item.
 	ophandler struct {
-		numArgs int
-		fn      func([]float64) (float64, error)
+		numArgs      int  // Number of arguments to function
+		ignoreResult bool // Ignore results from function
+		fn           func([]float64) (float64, error)
 	}
 )
 
@@ -52,6 +54,11 @@ func (x *stackType) push(n float64) {
 	x.list = append(x.list, n)
 }
 
+// clear clears the stack.
+func (x *stackType) clear() {
+	x.list = []float64{}
+}
+
 // operation performs an operation on the stack.
 func (x *stackType) operation(handler ophandler) error {
 	// Make sure we have enough arguments in the list.
@@ -70,7 +77,9 @@ func (x *stackType) operation(handler ophandler) error {
 	// Remove the number of arguments this operation consumes and adds the return
 	// from the function to the stack.
 	x.list = x.list[0 : length-handler.numArgs]
-	x.push(ret)
+	if !handler.ignoreResult {
+		x.push(ret)
+	}
 	return nil
 }
 
@@ -82,16 +91,12 @@ func (x *stackType) top() float64 {
 	return x.list[len(x.list)-1]
 }
 
-// printStacks prints the stacks (primary and backup).
-func (x *stackType) printStacks() {
+// print display the contents of the stack.
+func (x *stackType) print() {
 	length := len(x.list)
 	fmt.Println("===== Stack =====")
 	for ix := length - 1; ix >= 0; ix-- {
 		fmt.Printf("%d: %f\n", ix, x.list[ix])
-	}
-	fmt.Println("== Saved Stack ==")
-	for ix := length - 1; ix >= 0; ix-- {
-		fmt.Printf("%d: %f\n", ix, x.savedList[ix])
 	}
 }
 
@@ -115,20 +120,37 @@ func main() {
 		debug bool
 	)
 
+	stack := &stackType{}
+
 	// Operations
 	ops := map[string]ophandler{
-		"+": {2, func(a []float64) (float64, error) { return a[0] + a[1], nil }},
-		"-": {2, func(a []float64) (float64, error) { return a[0] - a[1], nil }},
-		"*": {2, func(a []float64) (float64, error) { return a[0] * a[1], nil }},
-		"/": {2, func(a []float64) (float64, error) {
+		// Basic operations
+		"+": {2, false, func(a []float64) (float64, error) { return a[0] + a[1], nil }},
+		"-": {2, false, func(a []float64) (float64, error) { return a[0] - a[1], nil }},
+		"*": {2, false, func(a []float64) (float64, error) { return a[0] * a[1], nil }},
+		"/": {2, false, func(a []float64) (float64, error) {
 			if a[1] == 0 {
 				return 0, errors.New("can't divide by zero")
 			}
 			return a[0] / a[1], nil
 		}},
-	}
+		"chs": {1, false, func(a []float64) (float64, error) { return a[0] * -1, nil }},
+		"inv": {1, false, func(a []float64) (float64, error) { return 1 / a[0], nil }},
+		"^":   {2, false, func(a []float64) (float64, error) { return math.Pow(a[0], a[1]), nil }},
+		"%":   {2, false, func(a []float64) (float64, error) { return math.Mod(a[0], a[1]), nil }},
+		"pct": {2, false, func(a []float64) (float64, error) { return a[0] * (1 + a[1]/100), nil }},
 
-	stack := &stackType{}
+		// stack operations
+		"s": {0, true, func(_ []float64) (float64, error) { stack.print(); return 0, nil }},
+		"c": {0, true, func(_ []float64) (float64, error) { stack.clear(); return 0, nil }},
+
+		// program control
+		"debug": {0, true, func(_ []float64) (float64, error) {
+			debug = !debug
+			fmt.Printf("Debugging state: %v\n", debug)
+			return 0, nil
+		}},
+	}
 
 	rl, err := readline.New("> ")
 	if err != nil {
@@ -143,7 +165,7 @@ func main() {
 		stack.save()
 
 		if debug {
-			stack.printStacks()
+			stack.print()
 		}
 
 		line, err := rl.Readline()
@@ -175,19 +197,23 @@ func main() {
 					stack.restore()
 					break
 				}
-				opdone = true
+				// If the particular handler does not ignore results
+				// from the function, set opdone to true. This will
+				// cause the top of the stack results to be printed.
+				opdone = !handler.ignoreResult
+				continue
 			}
 
-			// General commands.
-			if token == "debug" {
-				debug = !debug
-				fmt.Printf("Debugging state: %v\n", debug)
-			}
 			if token == "quit" || token == "q" {
 				fmt.Printf("Bye\n")
 				break
 			}
 
+			// Unrecognized number or token.
+			fmt.Printf("Unknown operation: %q\n", token)
+			opdone = false
+			stack.restore()
+			break
 		}
 		if opdone {
 			fmt.Println("=", stack.top())
