@@ -233,7 +233,7 @@ func main() {
 				fmt.Println("  operation <ENTER> - perform an operation on the stack (see below).")
 				fmt.Println()
 				fmt.Println("It's also possible to separate multiple operations with space:")
-				fmt.Println("  10 2 3 + - (result = 4)")
+				fmt.Println("  10 2 3 * - (result = 4)")
 				fmt.Println()
 				fmt.Printf("Operations:\n")
 
