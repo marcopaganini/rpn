@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -250,13 +251,13 @@ func main() {
 				continue
 			}
 
-			if token == "quit" || token == "q" {
-				fmt.Printf("Bye\n")
-				break
+			if token == "quit" || token == "exit" || token == "q" {
+				fmt.Printf("Bye.\n")
+				os.Exit(0)
 			}
 
 			// Unrecognized number or token.
-			fmt.Printf("Unknown operation: %q\n", token)
+			fmt.Printf("Unknown operation: %q. Use \"help\" for online-help.\n", token)
 			autoprint = false
 			stack.restore()
 			break
