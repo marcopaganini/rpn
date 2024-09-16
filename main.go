@@ -145,7 +145,7 @@ func main() {
 	ops := map[string]ophandler{
 		// Basic operations
 		"+": {"Add x to y", 2, false, func(a []float64) (float64, error) { return a[0] + a[1], nil }},
-		"-": {"Subtracy x from y", 2, false, func(a []float64) (float64, error) { return a[0] - a[1], nil }},
+		"-": {"Subtract x from y", 2, false, func(a []float64) (float64, error) { return a[0] - a[1], nil }},
 		"*": {"Multiply x and y", 2, false, func(a []float64) (float64, error) { return a[0] * a[1], nil }},
 		"/": {"Divide y by x", 2, false, func(a []float64) (float64, error) {
 			if a[1] == 0 {
@@ -156,13 +156,32 @@ func main() {
 		"chs": {"Change signal of x", 1, false, func(a []float64) (float64, error) { return a[0] * -1, nil }},
 		"inv": {"Invert x (1/x)", 1, false, func(a []float64) (float64, error) { return 1 / a[0], nil }},
 		"^":   {"Raise y to the power of x", 2, false, func(a []float64) (float64, error) { return math.Pow(a[0], a[1]), nil }},
-		"%":   {"Calculates y modulo x", 2, false, func(a []float64) (float64, error) { return math.Mod(a[0], a[1]), nil }},
-		"pct": {"Calculate x% of y", 2, false, func(a []float64) (float64, error) { return a[0] * a[1] / 100, nil }},
+		"mod": {"Calculates y modulo x", 2, false, func(a []float64) (float64, error) { return math.Mod(a[0], a[1]), nil }},
+		"%":   {"Calculate x% of y", 2, false, func(a []float64) (float64, error) { return a[0] * a[1] / 100, nil }},
+
+		"fac": {"Calculate factorial of x", 1, false, func(a []float64) (float64, error) {
+			x := uint64(a[0])
+			if x <= 0 {
+				return 0, errors.New("factorial requires a positive number")
+			}
+			fact := uint64(1)
+			for ix := uint64(1); ix <= x; ix++ {
+				fact *= ix
+			}
+			return float64(fact), nil
+		}},
 
 		// stack operations
 		"p": {"Display stack", 0, true, func(_ []float64) (float64, error) { stack.print(); return 0, nil }},
 		"c": {"Clear stack", 0, true, func(_ []float64) (float64, error) { stack.clear(); return 0, nil }},
 		"=": {"Print top of stack (x)", 0, true, func(_ []float64) (float64, error) { fmt.Println(stack.top()); return 0, nil }},
+		"d": {"Drop top of stack (x)", 1, true, func(_ []float64) (float64, error) { return 0, nil }},
+
+		// math & physical constants
+		"PI":  {"The famous transcedental number", 0, false, func(_ []float64) (float64, error) { return math.Pi, nil }},
+		"E":   {"Another famous transcedental number", 0, false, func(_ []float64) (float64, error) { return math.E, nil }},
+		"C":   {"Speed of light in vacuum, in m/s", 0, false, func(_ []float64) (float64, error) { return 299792458, nil }},
+		"MOL": {"Avogadro's number", 1, false, func(_ []float64) (float64, error) { return 6.02214154e23, nil }},
 
 		// program control
 		"debug": {"Toggle debugging", 0, true, func(_ []float64) (float64, error) {
