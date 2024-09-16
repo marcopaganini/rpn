@@ -160,7 +160,7 @@ func main() {
 		"%":   {"Calculate x% of y", 2, false, func(a []float64) (float64, error) { return a[0] * a[1] / 100, nil }},
 
 		"fac": {"Calculate factorial of x", 1, false, func(a []float64) (float64, error) {
-			x := a[0]
+			x := uint64(a[0])
 			if x <= 0 {
 				return 0, errors.New("factorial requires a positive number")
 			}
