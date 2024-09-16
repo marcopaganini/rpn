@@ -260,7 +260,8 @@ func main() {
 				for k := range ops {
 					keys = append(keys, k)
 				}
-				for _, k := range sort.StringSlice(keys) {
+				sort.Strings(keys)
+				for _, k := range keys {
 					fmt.Printf("  - %s: %s\n", k, ops[k].desc)
 				}
 				fmt.Println()
