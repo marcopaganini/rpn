@@ -167,7 +167,7 @@ func main() {
 			if token == "help" || token == "h" || token == "?" {
 				bold := color.New(color.Bold).SprintFunc()
 
-				fmt.Println(bold("Online help for ", programTitle, '.'))
+				fmt.Println(bold("Online help for ", programTitle, "."))
 				fmt.Println(bold("See http://github.com/marcopaganini/rpn for full details."))
 				fmt.Println()
 				fmt.Println(bold("Data entry:"))
