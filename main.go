@@ -15,12 +15,13 @@ import (
 	"strings"
 
 	"github.com/chzyer/readline"
+	"github.com/fatih/color"
 )
 
 var (
 	// Build is filled by go build -ldflags during build.
-	Build       string
-	programName = "rpn"
+	Build        string
+	programTitle = "rpn - a simple CLI RPN calculator"
 )
 
 type (
@@ -44,10 +45,10 @@ type (
 func atof(s string) (float64, error) {
 	base := 10
 	switch {
-	case strings.HasPrefix(s, "0x") || strings.HasPrefix(s, "0X"):
+	case (strings.HasPrefix(s, "0x") || strings.HasPrefix(s, "0X")) && len(s) > 2:
 		s = s[2:]
 		base = 16
-	case strings.HasPrefix(s, "0") || strings.HasPrefix(s, "o"):
+	case (strings.HasPrefix(s, "0") || strings.HasPrefix(s, "o")) && len(s) > 1:
 		s = s[1:]
 		base = 8
 	}
@@ -100,7 +101,7 @@ func main() {
 		// stack operations
 		"p": {"Display stack", 0, true, func(_ []float64) (float64, error) { stack.print(base); return 0, nil }},
 		"c": {"Clear stack", 0, true, func(_ []float64) (float64, error) { stack.clear(); return 0, nil }},
-		"=": {"Print top of stack (x)", 0, true, func(_ []float64) (float64, error) { fmt.Println(stack.top()); return 0, nil }},
+		"=": {"Print top of stack (x)", 0, true, func(_ []float64) (float64, error) { stack.printTop(base); return 0, nil }},
 		"d": {"Drop top of stack (x)", 1, true, func(_ []float64) (float64, error) { return 0, nil }},
 
 		// math & physical constants
@@ -151,7 +152,7 @@ func main() {
 			if ok {
 				err := stack.operation(handler)
 				if err != nil {
-					fmt.Println("ERROR:", err)
+					color.Red("ERROR:", err)
 					stack.restore()
 					break
 				}
@@ -164,16 +165,21 @@ func main() {
 
 			// Help
 			if token == "help" || token == "h" || token == "?" {
-				fmt.Printf("Online help for %s\n", programName)
+				bold := color.New(color.Bold).SprintFunc()
+
+				fmt.Println(bold("Online help for ", programTitle, '.'))
+				fmt.Println(bold("See http://github.com/marcopaganini/rpn for full details."))
 				fmt.Println()
-				fmt.Println("Data entry:")
+				fmt.Println(bold("Data entry:"))
 				fmt.Println("  number <ENTER> - push a number on top of the stack.")
 				fmt.Println("  operation <ENTER> - perform an operation on the stack (see below).")
 				fmt.Println()
-				fmt.Println("It's also possible to separate multiple operations with space:")
-				fmt.Println("  10 2 3 * - (result = 4)")
+				fmt.Println("  It's also possible to separate multiple operations with space:")
+				fmt.Println("    10 2 3 * - (result = 4)")
 				fmt.Println()
-				fmt.Printf("Operations:\n")
+				fmt.Println("  Prefix numbers with 0x to indicate hexadecimal, 0 for octal.")
+				fmt.Println()
+				fmt.Println(bold("Operations:"))
 
 				var keys []string
 				for k := range ops {
@@ -181,10 +187,10 @@ func main() {
 				}
 				sort.Strings(keys)
 				for _, k := range keys {
-					fmt.Printf("  - %s: %s\n", k, ops[k].desc)
+					fmt.Printf("  - %s: %s\n", bold(k), ops[k].desc)
 				}
 				fmt.Println()
-				fmt.Println("Please Note:")
+				fmt.Println(bold("Please Note:"))
 				fmt.Println("  - x means the number at the top of the stack")
 				fmt.Println("  - y means the second number from the top of the stack")
 				continue

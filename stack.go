@@ -7,6 +7,8 @@ package main
 import (
 	"fmt"
 	"math"
+
+	"github.com/fatih/color"
 )
 
 type (
@@ -76,14 +78,15 @@ func (x *stackType) top() float64 {
 
 // printTop displays the top of the stack using the base indicated.
 func (x *stackType) printTop(base int) {
-	last := len(x.list) - 1
-	fmt.Println("=", formatNumber(x.list[last], base))
+	color.Cyan("= %s", formatNumber(x.top(), base))
 }
 
 // print displays the contents of the stack using the base indicated.
 func (x *stackType) print(base int) {
+	bold := color.New(color.Bold).SprintFunc()
 	last := len(x.list) - 1
-	fmt.Println("===== Stack =====")
+
+	fmt.Println(bold("===== Stack ====="))
 	for ix := last; ix >= 0; ix-- {
 		tag := fmt.Sprintf("%2d", ix)
 		switch ix {
@@ -102,7 +105,7 @@ func formatNumber(n float64, base int) string {
 	// Indicate possible truncation
 	suffix := ""
 	if base != 10 && math.Floor(n) != n {
-		suffix = "(truncated)"
+		suffix = fmt.Sprintf("(truncated from %v)", n)
 	}
 
 	switch {
