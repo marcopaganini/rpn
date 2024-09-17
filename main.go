@@ -38,25 +38,32 @@ type (
 	}
 )
 
-// isNumber returns true if the string appears to be a number.
-func isNumber(s string) bool {
-	_, err := strconv.ParseFloat(s, 64)
-	return err == nil
-}
-
-// atof converts a string to a float.
+// atof takes a string as an argument and return a float64 representing that
+// string. Strings starting in 0x or 0X are treated as hex strings.  Strings
+// starting in o or 0 are treated as octal strings.
 func atof(s string) (float64, error) {
-	n, err := strconv.ParseFloat(s, 64)
-	if err != nil {
-		return 0, err
+	base := 10
+	switch {
+	case strings.HasPrefix(s, "0x") || strings.HasPrefix(s, "0X"):
+		s = s[2:]
+		base = 16
+	case strings.HasPrefix(s, "0") || strings.HasPrefix(s, "o"):
+		s = s[1:]
+		base = 8
 	}
-	return n, nil
+
+	if base == 10 {
+		return strconv.ParseFloat(s, 64)
+	}
+	ret, err := strconv.ParseUint(s, base, 64)
+	return float64(ret), err
 }
 
 func main() {
-	var (
-		debug bool
-	)
+	var debug bool
+
+	// Default == decimal for printouts
+	base := 10
 
 	stack := &stackType{}
 
@@ -91,7 +98,7 @@ func main() {
 		}},
 
 		// stack operations
-		"p": {"Display stack", 0, true, func(_ []float64) (float64, error) { stack.print(); return 0, nil }},
+		"p": {"Display stack", 0, true, func(_ []float64) (float64, error) { stack.print(base); return 0, nil }},
 		"c": {"Clear stack", 0, true, func(_ []float64) (float64, error) { stack.clear(); return 0, nil }},
 		"=": {"Print top of stack (x)", 0, true, func(_ []float64) (float64, error) { fmt.Println(stack.top()); return 0, nil }},
 		"d": {"Drop top of stack (x)", 1, true, func(_ []float64) (float64, error) { return 0, nil }},
@@ -103,6 +110,10 @@ func main() {
 		"MOL": {"Avogadro's number", 1, false, func(_ []float64) (float64, error) { return 6.02214154e23, nil }},
 
 		// program control
+		"dec": {"Output in decimal", 0, true, func(_ []float64) (float64, error) { base = 10; return 0, nil }},
+		"hex": {"Output in hexadecimal", 0, true, func(_ []float64) (float64, error) { base = 16; return 0, nil }},
+		"oct": {"Output in octal", 0, true, func(_ []float64) (float64, error) { base = 8; return 0, nil }},
+
 		"debug": {"Toggle debugging", 0, true, func(_ []float64) (float64, error) {
 			debug = !debug
 			fmt.Printf("Debugging state: %v\n", debug)
@@ -123,7 +134,7 @@ func main() {
 		stack.save()
 
 		if debug {
-			stack.print()
+			stack.print(base)
 		}
 
 		line, err := rl.Readline()
@@ -135,17 +146,6 @@ func main() {
 		// Split into fields and process
 		autoprint := false
 		for _, token := range strings.Fields(line) {
-			if isNumber(token) {
-				n, err := atof(token)
-				if err != nil {
-					fmt.Printf("Not a number or operator: %q", token)
-					stack.restore()
-					break
-				}
-				stack.push(n)
-				continue
-			}
-
 			// Check operator map
 			handler, ok := ops[token]
 			if ok {
@@ -195,14 +195,19 @@ func main() {
 				os.Exit(0)
 			}
 
-			// Unrecognized number or token.
-			fmt.Printf("Unknown operation: %q. Use \"help\" for online-help.\n", token)
-			autoprint = false
-			stack.restore()
-			break
+			// At this point, it's either a number or not recognized.
+			n, err := atof(token)
+			if err != nil {
+				fmt.Printf("Not a number or operator: %q. Use \"help\" for online help.\n", token)
+				stack.restore()
+				continue
+			}
+			// Valid number
+			stack.push(n)
+			continue
 		}
 		if autoprint {
-			fmt.Println("=", stack.top())
+			stack.printTop(base)
 		}
 	}
 }

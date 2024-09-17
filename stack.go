@@ -4,7 +4,10 @@
 // (C) 2024 by Marco Paganini <paganini AT paganini DOT net>
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"math"
+)
 
 type (
 	// stackType holds the representation of the RPN stack. It contains
@@ -71,8 +74,14 @@ func (x *stackType) top() float64 {
 	return x.list[len(x.list)-1]
 }
 
-// print display the contents of the stack.
-func (x *stackType) print() {
+// printTop displays the top of the stack using the base indicated.
+func (x *stackType) printTop(base int) {
+	last := len(x.list) - 1
+	fmt.Println("=", formatNumber(x.list[last], base))
+}
+
+// print displays the contents of the stack using the base indicated.
+func (x *stackType) print(base int) {
 	last := len(x.list) - 1
 	fmt.Println("===== Stack =====")
 	for ix := last; ix >= 0; ix-- {
@@ -83,6 +92,25 @@ func (x *stackType) print() {
 		case last - 1:
 			tag = " y"
 		}
-		fmt.Printf("%s: %f\n", tag, x.list[ix])
+		fmt.Printf("%s: %s\n", tag, formatNumber(x.list[ix], base))
+	}
+}
+
+// formatNumber formats the number using base. For bases different than 10,
+// non-integer floating numbers are truncated.
+func formatNumber(n float64, base int) string {
+	// Indicate possible truncation
+	suffix := ""
+	if base != 10 && math.Floor(n) != n {
+		suffix = "(truncated)"
+	}
+
+	switch {
+	case base == 8:
+		return fmt.Sprintf("0%o %s", uint64(n), suffix)
+	case base == 16:
+		return fmt.Sprintf("0x%x %s", uint64(n), suffix)
+	default:
+		return fmt.Sprintf("%v %s", n, suffix)
 	}
 }
