@@ -10,7 +10,6 @@ import (
 	"log"
 	"math"
 	"os"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -32,6 +31,7 @@ type (
 	// won't be printed afterwards. This is used for commands like "show stack"
 	// that don't change the stack at all.
 	ophandler struct {
+		op           string // operator or command
 		desc         string // operation description (used by help)
 		numArgs      int    // Number of arguments to function
 		ignoreResult bool   // Ignore results from function
@@ -60,6 +60,32 @@ func atof(s string) (float64, error) {
 	return float64(ret), err
 }
 
+// oplistToMap creates a map of op (command) -> ophandler that can be easily
+// used later to find the function to be executed. It takes a slice of
+// interfaces and returns a map[string][ophandler].
+func oplistToMap(a []interface{}) map[string]ophandler {
+	ret := map[string]ophandler{}
+
+	for _, v := range a {
+		if h, ok := v.(ophandler); ok {
+			ret[h.op] = h
+		}
+	}
+	return ret
+}
+
+// help displays the help message to the screen based on the contents of opmap.
+func help(ops []interface{}) {
+	bold := color.New(color.Bold).SprintFunc()
+	for _, v := range ops {
+		if handler, ok := v.(ophandler); ok {
+			fmt.Printf("  - %s: %s\n", bold(handler.op), handler.desc)
+			continue
+		}
+		fmt.Println(v)
+	}
+}
+
 func main() {
 	var debug bool
 
@@ -68,25 +94,43 @@ func main() {
 
 	stack := &stackType{}
 
+	// Color for headers and other help elements.
+	bold := color.New(color.Bold).SprintFunc()
+
 	// Operations
-	ops := map[string]ophandler{
-		// Basic operations
-		"+": {"Add x to y", 2, false, func(a []float64) (float64, error) { return a[0] + a[1], nil }},
-		"-": {"Subtract x from y", 2, false, func(a []float64) (float64, error) { return a[0] - a[1], nil }},
-		"*": {"Multiply x and y", 2, false, func(a []float64) (float64, error) { return a[0] * a[1], nil }},
-		"/": {"Divide y by x", 2, false, func(a []float64) (float64, error) {
+	ops := []interface{}{
+		// Header
+		bold("Online help for ", programTitle, "."),
+		bold("See http://github.com/marcopaganini/rpn for full details."),
+		"",
+		bold("Data entry:"),
+		"  number <ENTER> - push a number on top of the stack.",
+		"  operation <ENTER> - perform an operation on the stack (see below).",
+		"",
+		"  It's also possible to separate multiple operations with space:",
+		"    10 2 3 * - (result = 4)",
+		"",
+		"  Prefix numbers with 0x to indicate hexadecimal, 0 for octal.",
+		"",
+		bold("Operations:"),
+		"",
+		bold("Basic Operations"),
+		ophandler{"+", "Add x to y", 2, false, func(a []float64) (float64, error) { return a[0] + a[1], nil }},
+		ophandler{"-", "Subtract x from y", 2, false, func(a []float64) (float64, error) { return a[0] - a[1], nil }},
+		ophandler{"*", "Multiply x and y", 2, false, func(a []float64) (float64, error) { return a[0] * a[1], nil }},
+		ophandler{"/", "Divide y by x", 2, false, func(a []float64) (float64, error) {
 			if a[1] == 0 {
 				return 0, errors.New("can't divide by zero")
 			}
 			return a[0] / a[1], nil
 		}},
-		"chs": {"Change signal of x", 1, false, func(a []float64) (float64, error) { return a[0] * -1, nil }},
-		"inv": {"Invert x (1/x)", 1, false, func(a []float64) (float64, error) { return 1 / a[0], nil }},
-		"^":   {"Raise y to the power of x", 2, false, func(a []float64) (float64, error) { return math.Pow(a[0], a[1]), nil }},
-		"mod": {"Calculates y modulo x", 2, false, func(a []float64) (float64, error) { return math.Mod(a[0], a[1]), nil }},
-		"%":   {"Calculate x% of y", 2, false, func(a []float64) (float64, error) { return a[0] * a[1] / 100, nil }},
+		ophandler{"chs", "Change signal of x", 1, false, func(a []float64) (float64, error) { return a[0] * -1, nil }},
+		ophandler{"inv", "Invert x (1/x)", 1, false, func(a []float64) (float64, error) { return 1 / a[0], nil }},
+		ophandler{"^", "Raise y to the power of x", 2, false, func(a []float64) (float64, error) { return math.Pow(a[0], a[1]), nil }},
+		ophandler{"mod", "Calculates y modulo x", 2, false, func(a []float64) (float64, error) { return math.Mod(a[0], a[1]), nil }},
+		ophandler{"%", "Calculate x% of y", 2, false, func(a []float64) (float64, error) { return a[0] * a[1] / 100, nil }},
 
-		"fac": {"Calculate factorial of x", 1, false, func(a []float64) (float64, error) {
+		ophandler{"fac", "Calculate factorial of x", 1, false, func(a []float64) (float64, error) {
 			x := uint64(a[0])
 			if x <= 0 {
 				return 0, errors.New("factorial requires a positive number")
@@ -98,29 +142,38 @@ func main() {
 			return float64(fact), nil
 		}},
 
-		// stack operations
-		"p": {"Display stack", 0, true, func(_ []float64) (float64, error) { stack.print(base); return 0, nil }},
-		"c": {"Clear stack", 0, true, func(_ []float64) (float64, error) { stack.clear(); return 0, nil }},
-		"=": {"Print top of stack (x)", 0, true, func(_ []float64) (float64, error) { stack.printTop(base); return 0, nil }},
-		"d": {"Drop top of stack (x)", 1, true, func(_ []float64) (float64, error) { return 0, nil }},
+		"",
+		bold("Stack Operations"),
+		ophandler{"p", "Display stack", 0, true, func(_ []float64) (float64, error) { stack.print(base); return 0, nil }},
+		ophandler{"c", "Clear stack", 0, true, func(_ []float64) (float64, error) { stack.clear(); return 0, nil }},
+		ophandler{"=", "Print top of stack (x)", 0, true, func(_ []float64) (float64, error) { fmt.Println(stack.top()); return 0, nil }},
+		ophandler{"d", "Drop top of stack (x)", 1, true, func(_ []float64) (float64, error) { return 0, nil }},
 
-		// math & physical constants
-		"PI":  {"The famous transcedental number", 0, false, func(_ []float64) (float64, error) { return math.Pi, nil }},
-		"E":   {"Another famous transcedental number", 0, false, func(_ []float64) (float64, error) { return math.E, nil }},
-		"C":   {"Speed of light in vacuum, in m/s", 0, false, func(_ []float64) (float64, error) { return 299792458, nil }},
-		"MOL": {"Avogadro's number", 1, false, func(_ []float64) (float64, error) { return 6.02214154e23, nil }},
+		"",
+		bold("Math and Physical constants"),
+		ophandler{"PI", "The famous transcedental number", 0, false, func(_ []float64) (float64, error) { return math.Pi, nil }},
+		ophandler{"E", "Another famous transcedental number", 0, false, func(_ []float64) (float64, error) { return math.E, nil }},
+		ophandler{"C", "Speed of light in vacuum, in m/s", 0, false, func(_ []float64) (float64, error) { return 299792458, nil }},
+		ophandler{"MOL", "Avogadro's number", 1, false, func(_ []float64) (float64, error) { return 6.02214154e23, nil }},
 
-		// program control
-		"dec": {"Output in decimal", 0, true, func(_ []float64) (float64, error) { base = 10; return 0, nil }},
-		"hex": {"Output in hexadecimal", 0, true, func(_ []float64) (float64, error) { base = 16; return 0, nil }},
-		"oct": {"Output in octal", 0, true, func(_ []float64) (float64, error) { base = 8; return 0, nil }},
+		"",
+		bold("Program Control"),
+		ophandler{"dec", "Output in decimal", 0, true, func(_ []float64) (float64, error) { base = 10; return 0, nil }},
+		ophandler{"hex", "Output in hexadecimal", 0, true, func(_ []float64) (float64, error) { base = 16; return 0, nil }},
+		ophandler{"oct", "Output in octal", 0, true, func(_ []float64) (float64, error) { base = 8; return 0, nil }},
 
-		"debug": {"Toggle debugging", 0, true, func(_ []float64) (float64, error) {
+		ophandler{"debug", "Toggle debugging", 0, true, func(_ []float64) (float64, error) {
 			debug = !debug
 			fmt.Printf("Debugging state: %v\n", debug)
 			return 0, nil
 		}},
+		"",
+		bold("Please Note:"),
+		"  - x means the number at the top of the stack",
+		"  - y means the second number from the top of the stack",
 	}
+
+	opmap := oplistToMap(ops)
 
 	rl, err := readline.New("> ")
 	if err != nil {
@@ -148,7 +201,7 @@ func main() {
 		autoprint := false
 		for _, token := range strings.Fields(line) {
 			// Check operator map
-			handler, ok := ops[token]
+			handler, ok := opmap[token]
 			if ok {
 				err := stack.operation(handler)
 				if err != nil {
@@ -165,34 +218,7 @@ func main() {
 
 			// Help
 			if token == "help" || token == "h" || token == "?" {
-				bold := color.New(color.Bold).SprintFunc()
-
-				fmt.Println(bold("Online help for ", programTitle, "."))
-				fmt.Println(bold("See http://github.com/marcopaganini/rpn for full details."))
-				fmt.Println()
-				fmt.Println(bold("Data entry:"))
-				fmt.Println("  number <ENTER> - push a number on top of the stack.")
-				fmt.Println("  operation <ENTER> - perform an operation on the stack (see below).")
-				fmt.Println()
-				fmt.Println("  It's also possible to separate multiple operations with space:")
-				fmt.Println("    10 2 3 * - (result = 4)")
-				fmt.Println()
-				fmt.Println("  Prefix numbers with 0x to indicate hexadecimal, 0 for octal.")
-				fmt.Println()
-				fmt.Println(bold("Operations:"))
-
-				var keys []string
-				for k := range ops {
-					keys = append(keys, k)
-				}
-				sort.Strings(keys)
-				for _, k := range keys {
-					fmt.Printf("  - %s: %s\n", bold(k), ops[k].desc)
-				}
-				fmt.Println()
-				fmt.Println(bold("Please Note:"))
-				fmt.Println("  - x means the number at the top of the stack")
-				fmt.Println("  - y means the second number from the top of the stack")
+				help(ops)
 				continue
 			}
 
