@@ -39,13 +39,28 @@ RPN calculator. :)
 
 ### Automatic process
 
-To download and install automatically, just run:
+To download and install automatically (under `/usr/local/bin`), just run:
 
 ```bash
-wget -q -O/tmp/install \
-  'https://raw.githubusercontent.com/marcopaganini/installer/master/install.sh' && \
-  sudo sh /tmp/install marcopaganini/rpn
+curl -s \
+  'https://raw.githubusercontent.com/marcopaganini/installer/master/install.sh' |
+  sudo sh -s -- marcopaganini/rpn
 ```
+
+This assumes you have root equivalence using `sudo` and will possibly require you
+to enter your password.
+
+To download and install under another directory (for example, `$HOME/.local/bin`), run:
+
+```bash
+curl -s \
+  'https://raw.githubusercontent.com/marcopaganini/installer/master/install.sh' |
+  sh -s -- marcopaganini/rpn "$HOME/.local/bin"
+```
+
+Note that `sudo` is not required on the second command as the installation directory
+is under your home. Whatever location you choose, make sure your PATH environment
+variable contains that location.
 
 ### Manual process
 
