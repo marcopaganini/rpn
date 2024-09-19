@@ -141,6 +141,23 @@ func main() {
 			}
 			return float64(fact), nil
 		}},
+		"",
+		bold("Bitwise Operations"),
+		ophandler{"and", "Logical AND between x and y", 2, false, func(a []float64) (float64, error) {
+			return float64(uint64(a[0]) & uint64(a[1])), nil
+		}},
+		ophandler{"or", "Logical OR between x and y", 2, false, func(a []float64) (float64, error) {
+			return float64(uint64(a[0]) | uint64(a[1])), nil
+		}},
+		ophandler{"xor", "Logical XOR between x and y", 2, false, func(a []float64) (float64, error) {
+			return float64(uint64(a[0]) ^ uint64(a[1])), nil
+		}},
+		ophandler{"lshift", "Shift y left x times", 2, false, func(a []float64) (float64, error) {
+			return float64(uint64(a[0]) << uint64(a[1])), nil
+		}},
+		ophandler{"rshift", "Shift y right x times", 2, false, func(a []float64) (float64, error) {
+			return float64(uint64(a[0]) >> uint64(a[1])), nil
+		}},
 
 		"",
 		bold("Stack Operations"),
