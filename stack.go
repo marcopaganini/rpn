@@ -1,5 +1,5 @@
-// This file is part of rpn, a silly RPN calculator for the CLI.
-// For further information, check https://github.com/marcopaganini/rcalc
+// This file is part of rpn, a simple and useful CLI RPN calculator.
+// For further information, check https://github.com/marcopaganini/rpn
 //
 // (C) 2024 by Marco Paganini <paganini AT paganini DOT net>
 package main

@@ -1,5 +1,5 @@
-// This file is part of rpn, a silly RPN calculator for the CLI.
-// For further information, check https://github.com/marcopaganini/rcalc
+// This file is part of rpn, a simple and useful CLI RPN calculator.
+// For further information, check https://github.com/marcopaganini/rpn
 //
 // (C) 2024 by Marco Paganini <paganini AT paganini DOT net>
 package main
@@ -94,8 +94,9 @@ func main() {
 
 	stack := &stackType{}
 
-	// Color for headers and other help elements.
+	// Colors
 	bold := color.New(color.Bold).SprintFunc()
+	red := color.New(color.FgRed).SprintFunc()
 
 	// Operations
 	ops := []interface{}{
@@ -222,7 +223,7 @@ func main() {
 			if ok {
 				err := stack.operation(handler)
 				if err != nil {
-					color.Red("ERROR:", err)
+					fmt.Printf(red("ERROR: %v\n"), err)
 					stack.restore()
 					break
 				}
