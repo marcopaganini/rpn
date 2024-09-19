@@ -1,0 +1,5 @@
+# Enable gofmt linter in addition to default set of linters
+# https://golangci-lint.run/usage/linters/#enabled-by-default
+linters:
+  enable:
+    - gofmt
