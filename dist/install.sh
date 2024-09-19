@@ -5,21 +5,20 @@
 
 set -eu
 
-readonly PREFIX="/usr/local"
+readonly DEFAULT_INSTALL_DIR="/usr/local/bin"
 readonly BIN="rpn"
 
 main() {
-  uid="$(id -u)"
-  if [ "${uid}" -ne 0 ]; then
-    die >&2 "Please run this program as root (using sudo)."
-    exit 1
+  # Only argument is the install directory. If not provided,
+  # the program will use DEFAULT_INSTALL_DIR.
+  install_dir="${DEFAULT_INSTALL_DIR}"
+  if [ $# -eq 1 ]; then
+    install_dir="${1}"
   fi
 
-  bindir="${PREFIX}/bin"
-
-  mkdir -p "${bindir}"
-  cp "${BIN}" "${bindir}"
-  chmod 755 "${bindir}/${BIN}"
+  mkdir -p "${install_dir}"
+  cp "${BIN}" "${install_dir}"
+  chmod 755 "${install_dir}/${BIN}"
 }
 
 main "${@}"
