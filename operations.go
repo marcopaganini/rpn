@@ -14,17 +14,16 @@ import (
 
 type (
 	// ophandler contains the handler for a single operation.  numArgs
-	// indicates how many items at the top of the stack should be popped and
-	// sent to the function. ignoreResult will cause the function return to be
-	// ignored (i.e, not be repushed into the stack and the top of the stack
-	// won't be printed afterwards. This is used for commands like "show stack"
-	// that don't change the stack at all.
+	// indicates how many arguments the function needs in the stack.
 	ophandler struct {
-		op           string // operator or command
-		desc         string // operation description (used by help)
-		numArgs      int    // Number of arguments to function
-		ignoreResult bool   // Ignore results from function
-		fn           func([]float64) (float64, error)
+		op      string // operator or command
+		desc    string // operation description (used by help)
+		numArgs int    // Number of arguments to function
+
+		// Function receives the entire inverted stack (x=0, y=1, etc) and
+		// returns the number of elements to be popped from the stack, and a
+		// list of elements to be added pushes to the stack.
+		fn func([]float64) ([]float64, int, error)
 	}
 
 	// opsType contains the base information for a list of operations and
@@ -66,148 +65,148 @@ func newOpsType(stack *stackType) *opsType {
 		bold("Operations:"),
 		"",
 		bold("Basic Operations"),
-		ophandler{"+", "Add x to y", 2, false, func(a []float64) (float64, error) {
-			return a[0] + a[1], nil
+		ophandler{"+", "Add x to y", 2, func(a []float64) ([]float64, int, error) {
+			return []float64{a[1] + a[0]}, 2, nil
 		}},
-		ophandler{"-", "Subtract x from y", 2, false, func(a []float64) (float64, error) {
-			return a[0] - a[1], nil
+		ophandler{"-", "Subtract x from y", 2, func(a []float64) ([]float64, int, error) {
+			return []float64{a[1] - a[0]}, 2, nil
 		}},
-		ophandler{"*", "Multiply x and y", 2, false, func(a []float64) (float64, error) {
-			return a[0] * a[1], nil
+		ophandler{"*", "Multiply x and y", 2, func(a []float64) ([]float64, int, error) {
+			return []float64{a[1] * a[0]}, 2, nil
 		}},
-		ophandler{"/", "Divide y by x", 2, false, func(a []float64) (float64, error) {
-			if a[1] == 0 {
-				return 0, errors.New("can't divide by zero")
+		ophandler{"/", "Divide y by x", 2, func(a []float64) ([]float64, int, error) {
+			if a[0] == 0 {
+				return nil, 2, errors.New("can't divide by zero")
 			}
-			return a[0] / a[1], nil
+			return []float64{a[1] / a[0]}, 2, nil
 		}},
-		ophandler{"chs", "Change signal of x", 1, false, func(a []float64) (float64, error) {
-			return a[0] * -1, nil
+		ophandler{"chs", "Change signal of x", 1, func(a []float64) ([]float64, int, error) {
+			return []float64{a[0] * -1}, 1, nil
 		}},
-		ophandler{"inv", "Invert x (1/x)", 1, false, func(a []float64) (float64, error) {
-			return 1 / a[0], nil
+		ophandler{"inv", "Invert x (1/x)", 1, func(a []float64) ([]float64, int, error) {
+			return []float64{1 / a[0]}, 1, nil
 		}},
-		ophandler{"^", "Raise y to the power of x", 2, false, func(a []float64) (float64, error) {
-			return math.Pow(a[0], a[1]), nil
+		ophandler{"^", "Raise y to the power of x", 2, func(a []float64) ([]float64, int, error) {
+			return []float64{math.Pow(a[1], a[0])}, 2, nil
 		}},
-		ophandler{"mod", "Calculates y modulo x", 2, false, func(a []float64) (float64, error) {
-			return math.Mod(a[0], a[1]), nil
+		ophandler{"mod", "Calculates y modulo x", 2, func(a []float64) ([]float64, int, error) {
+			return []float64{math.Mod(a[1], a[0])}, 2, nil
 		}},
-		ophandler{"%", "Calculate x% of y", 2, false, func(a []float64) (float64, error) {
-			return a[0] * a[1] / 100, nil
+		ophandler{"%", "Calculate x% of y", 2, func(a []float64) ([]float64, int, error) {
+			return []float64{a[1] * a[0] / 100}, 2, nil
 		}},
 
-		ophandler{"fac", "Calculate factorial of x", 1, false, func(a []float64) (float64, error) {
+		ophandler{"fac", "Calculate factorial of x", 1, func(a []float64) ([]float64, int, error) {
 			x := uint64(a[0])
 			if x <= 0 {
-				return 0, errors.New("factorial requires a positive number")
+				return nil, 1, errors.New("factorial requires a positive number")
 			}
 			fact := uint64(1)
 			for ix := uint64(1); ix <= x; ix++ {
 				fact *= ix
 			}
-			return float64(fact), nil
+			return []float64{float64(fact)}, 1, nil
 		}},
 		"",
 		bold("Bitwise Operations"),
-		ophandler{"and", "Logical AND between x and y", 2, false, func(a []float64) (float64, error) {
-			return float64(uint64(a[0]) & uint64(a[1])), nil
+		ophandler{"and", "Logical AND between x and y", 2, func(a []float64) ([]float64, int, error) {
+			return []float64{float64(uint64(a[1]) & uint64(a[0]))}, 2, nil
 		}},
-		ophandler{"or", "Logical OR between x and y", 2, false, func(a []float64) (float64, error) {
-			return float64(uint64(a[0]) | uint64(a[1])), nil
+		ophandler{"or", "Logical OR between x and y", 2, func(a []float64) ([]float64, int, error) {
+			return []float64{float64(uint64(a[1]) | uint64(a[0]))}, 2, nil
 		}},
-		ophandler{"xor", "Logical XOR between x and y", 2, false, func(a []float64) (float64, error) {
-			return float64(uint64(a[0]) ^ uint64(a[1])), nil
+		ophandler{"xor", "Logical XOR between x and y", 2, func(a []float64) ([]float64, int, error) {
+			return []float64{float64(uint64(a[1]) ^ uint64(a[0]))}, 2, nil
 		}},
-		ophandler{"lshift", "Shift y left x times", 2, false, func(a []float64) (float64, error) {
-			return float64(uint64(a[0]) << uint64(a[1])), nil
+		ophandler{"lshift", "Shift y left x times", 2, func(a []float64) ([]float64, int, error) {
+			return []float64{float64(uint64(a[1]) << uint64(a[0]))}, 2, nil
 		}},
-		ophandler{"rshift", "Shift y right x times", 2, false, func(a []float64) (float64, error) {
-			return float64(uint64(a[0]) >> uint64(a[1])), nil
+		ophandler{"rshift", "Shift y right x times", 2, func(a []float64) ([]float64, int, error) {
+			return []float64{float64(uint64(a[1]) >> uint64(a[0]))}, 2, nil
 		}},
 
 		"",
 		bold("Stack Operations"),
-		ophandler{"p", "Display stack", 0, true, func(_ []float64) (float64, error) {
+		ophandler{"p", "Display stack", 0, func(_ []float64) ([]float64, int, error) {
 			stack.print(ret.base)
-			return 0, nil
+			return nil, 0, nil
 		}},
-		ophandler{"c", "Clear stack", 0, true, func(_ []float64) (float64, error) {
+		ophandler{"c", "Clear stack", 0, func(_ []float64) ([]float64, int, error) {
 			stack.clear()
-			return 0, nil
+			return nil, 0, nil
 		}},
-		ophandler{"=", "Print top of stack (x)", 0, true, func(_ []float64) (float64, error) {
+		ophandler{"=", "Print top of stack (x)", 0, func(_ []float64) ([]float64, int, error) {
 			fmt.Println(stack.top())
-			return 0, nil
+			return nil, 0, nil
 		}},
-		ophandler{"d", "Drop top of stack (x)", 1, true, func(_ []float64) (float64, error) {
-			return 0, nil
+		ophandler{"d", "Drop top of stack (x)", 1, func(_ []float64) ([]float64, int, error) {
+			return nil, 1, nil
 		}},
 
 		"",
 		bold("Math and Physical constants"),
-		ophandler{"PI", "The famous transcedental number", 0, false, func(_ []float64) (float64, error) {
-			return math.Pi, nil
+		ophandler{"PI", "The famous transcedental number", 0, func(_ []float64) ([]float64, int, error) {
+			return []float64{math.Pi}, 0, nil
 		}},
-		ophandler{"E", "Another famous transcedental number", 0, false, func(_ []float64) (float64, error) {
-			return math.E, nil
+		ophandler{"E", "Another famous transcedental number", 0, func(_ []float64) ([]float64, int, error) {
+			return []float64{math.E}, 0, nil
 		}},
-		ophandler{"C", "Speed of light in vacuum, in m/s", 0, false, func(_ []float64) (float64, error) {
-			return 299792458, nil
+		ophandler{"C", "Speed of light in vacuum, in m/s", 0, func(_ []float64) ([]float64, int, error) {
+			return []float64{299792458}, 0, nil
 		}},
-		ophandler{"MOL", "Avogadro's number", 1, false, func(_ []float64) (float64, error) {
-			return 6.02214154e23, nil
+		ophandler{"MOL", "Avogadro's number", 1, func(_ []float64) ([]float64, int, error) {
+			return []float64{6.02214154e23}, 0, nil
 		}},
 
 		"",
 		bold("Computer constants"),
-		ophandler{"KB", "Kilobyte", 0, false, func(_ []float64) (float64, error) {
-			return math.Pow(10, 3), nil
+		ophandler{"KB", "Kilobyte", 0, func(_ []float64) ([]float64, int, error) {
+			return []float64{math.Pow(10, 3)}, 0, nil
 		}},
-		ophandler{"MB", "Megabyte", 0, false, func(_ []float64) (float64, error) {
-			return math.Pow(10, 6), nil
+		ophandler{"MB", "Megabyte", 0, func(_ []float64) ([]float64, int, error) {
+			return []float64{math.Pow(10, 6)}, 0, nil
 		}},
-		ophandler{"GB", "Gigabyte", 0, false, func(_ []float64) (float64, error) {
-			return math.Pow(10, 9), nil
+		ophandler{"GB", "Gigabyte", 0, func(_ []float64) ([]float64, int, error) {
+			return []float64{math.Pow(10, 9)}, 0, nil
 		}},
-		ophandler{"MB", "Terabyte", 0, false, func(_ []float64) (float64, error) {
-			return math.Pow(10, 12), nil
+		ophandler{"MB", "Terabyte", 0, func(_ []float64) ([]float64, int, error) {
+			return []float64{math.Pow(10, 12)}, 0, nil
 		}},
-		ophandler{"KIB", "Kibibyte", 0, false, func(_ []float64) (float64, error) {
-			return math.Pow(2, 10), nil
+		ophandler{"KIB", "Kibibyte", 0, func(_ []float64) ([]float64, int, error) {
+			return []float64{math.Pow(2, 10)}, 0, nil
 		}},
-		ophandler{"MIB", "Mebibyte", 0, false, func(_ []float64) (float64, error) {
-			return math.Pow(2, 20), nil
+		ophandler{"MIB", "Mebibyte", 0, func(_ []float64) ([]float64, int, error) {
+			return []float64{math.Pow(2, 20)}, 0, nil
 		}},
-		ophandler{"GIB", "Gibibyte", 0, false, func(_ []float64) (float64, error) {
-			return math.Pow(2, 30), nil
+		ophandler{"GIB", "Gibibyte", 0, func(_ []float64) ([]float64, int, error) {
+			return []float64{math.Pow(2, 30)}, 0, nil
 		}},
-		ophandler{"TIB", "Tebibyte", 0, false, func(_ []float64) (float64, error) {
-			return math.Pow(2, 40), nil
+		ophandler{"TIB", "Tebibyte", 0, func(_ []float64) ([]float64, int, error) {
+			return []float64{math.Pow(2, 40)}, 0, nil
 		}},
 
 		"",
 		bold("Program Control"),
-		ophandler{"dec", "Output in decimal", 0, true, func(_ []float64) (float64, error) {
+		ophandler{"dec", "Output in decimal", 0, func(_ []float64) ([]float64, int, error) {
 			ret.base = 10
-			return 0, nil
+			return nil, 0, nil
 		}},
-		ophandler{"bin", "Output in binary", 0, true, func(_ []float64) (float64, error) {
+		ophandler{"bin", "Output in binary", 0, func(_ []float64) ([]float64, int, error) {
 			ret.base = 2
-			return 0, nil
+			return nil, 0, nil
 		}},
-		ophandler{"oct", "Output in octal", 0, true, func(_ []float64) (float64, error) {
+		ophandler{"oct", "Output in octal", 0, func(_ []float64) ([]float64, int, error) {
 			ret.base = 8
-			return 0, nil
+			return nil, 0, nil
 		}},
-		ophandler{"hex", "Output in hexadecimal", 0, true, func(_ []float64) (float64, error) {
+		ophandler{"hex", "Output in hexadecimal", 0, func(_ []float64) ([]float64, int, error) {
 			ret.base = 16
-			return 0, nil
+			return nil, 0, nil
 		}},
-		ophandler{"debug", "Toggle debugging", 0, true, func(_ []float64) (float64, error) {
+		ophandler{"debug", "Toggle debugging", 0, func(_ []float64) ([]float64, int, error) {
 			ret.debug = !ret.debug
 			fmt.Printf("Debugging state: %v\n", ret.debug)
-			return 0, nil
+			return nil, 0, nil
 		}},
 		"",
 		bold("Please Note:"),

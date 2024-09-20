@@ -105,7 +105,7 @@ func calc(stack *stackType, cmd string) error {
 			// Check operator map
 			handler, ok := opmap[token]
 			if ok {
-				err := stack.operation(handler)
+				results, remove, err := stack.operation(handler)
 				if err != nil {
 					if single {
 						return err
@@ -117,7 +117,7 @@ func calc(stack *stackType, cmd string) error {
 				// If the particular handler does not ignore results from the
 				// function, set autoprint to true. This will cause the top of
 				// the stack results to be printed.
-				autoprint = !handler.ignoreResult
+				autoprint = (len(results) > 0 || remove > 0)
 				continue
 			}
 
