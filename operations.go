@@ -192,12 +192,16 @@ func newOpsType(stack *stackType) *opsType {
 			ret.base = 10
 			return 0, nil
 		}},
-		ophandler{"hex", "Output in hexadecimal", 0, true, func(_ []float64) (float64, error) {
-			ret.base = 16
+		ophandler{"bin", "Output in binary", 0, true, func(_ []float64) (float64, error) {
+			ret.base = 2
 			return 0, nil
 		}},
 		ophandler{"oct", "Output in octal", 0, true, func(_ []float64) (float64, error) {
 			ret.base = 8
+			return 0, nil
+		}},
+		ophandler{"hex", "Output in hexadecimal", 0, true, func(_ []float64) (float64, error) {
+			ret.base = 16
 			return 0, nil
 		}},
 		ophandler{"debug", "Toggle debugging", 0, true, func(_ []float64) (float64, error) {

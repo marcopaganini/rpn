@@ -115,6 +115,8 @@ func formatNumber(n float64, base int) string {
 	}
 
 	switch {
+	case base == 2:
+		return fmt.Sprintf("0b%b %s", uint64(n), suffix)
 	case base == 8:
 		return fmt.Sprintf("0%o %s", uint64(n), suffix)
 	case base == 16:
