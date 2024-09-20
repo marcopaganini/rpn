@@ -102,6 +102,12 @@ func (x *stackType) print(base int) {
 // formatNumber formats the number using base. For bases different than 10,
 // non-integer floating numbers are truncated.
 func formatNumber(n float64, base int) string {
+	// default format when decimals are present.
+	decfmt := "%.8f"
+	if base == 10 && math.Floor(n) == n {
+		decfmt = "%.f"
+	}
+
 	// Indicate possible truncation
 	suffix := ""
 	if base != 10 && math.Floor(n) != n {
@@ -114,6 +120,6 @@ func formatNumber(n float64, base int) string {
 	case base == 16:
 		return fmt.Sprintf("0x%x %s", uint64(n), suffix)
 	default:
-		return fmt.Sprintf("%v %s", n, suffix)
+		return fmt.Sprintf(decfmt+" %s", n, suffix)
 	}
 }
