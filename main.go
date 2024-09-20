@@ -130,12 +130,13 @@ func calc(stack *stackType, cmd string) error {
 			}
 
 			// At this point, it's either a number or not recognized.
+			// If anything fails, restore stack and stop token processing.
 			n, err := atof(token)
 			if err != nil {
 				fmt.Printf(red("Not a number or operator: %q.\n"), token)
 				fmt.Println(red("Use \"help\" for online help."))
 				stack.restore()
-				continue
+				break
 			}
 			// Valid number
 			stack.push(n)

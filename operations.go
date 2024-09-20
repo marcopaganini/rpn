@@ -160,6 +160,33 @@ func newOpsType(stack *stackType) *opsType {
 		}},
 
 		"",
+		bold("Computer constants"),
+		ophandler{"KB", "Kilobyte", 0, false, func(_ []float64) (float64, error) {
+			return math.Pow(10, 3), nil
+		}},
+		ophandler{"MB", "Megabyte", 0, false, func(_ []float64) (float64, error) {
+			return math.Pow(10, 6), nil
+		}},
+		ophandler{"GB", "Gigabyte", 0, false, func(_ []float64) (float64, error) {
+			return math.Pow(10, 9), nil
+		}},
+		ophandler{"MB", "Terabyte", 0, false, func(_ []float64) (float64, error) {
+			return math.Pow(10, 12), nil
+		}},
+		ophandler{"KIB", "Kibibyte", 0, false, func(_ []float64) (float64, error) {
+			return math.Pow(2, 10), nil
+		}},
+		ophandler{"MIB", "Mebibyte", 0, false, func(_ []float64) (float64, error) {
+			return math.Pow(2, 20), nil
+		}},
+		ophandler{"GIB", "Gibibyte", 0, false, func(_ []float64) (float64, error) {
+			return math.Pow(2, 30), nil
+		}},
+		ophandler{"TIB", "Tebibyte", 0, false, func(_ []float64) (float64, error) {
+			return math.Pow(2, 40), nil
+		}},
+
+		"",
 		bold("Program Control"),
 		ophandler{"dec", "Output in decimal", 0, true, func(_ []float64) (float64, error) {
 			ret.base = 10
