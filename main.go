@@ -27,12 +27,15 @@ var (
 func atof(s string) (float64, error) {
 	base := 10
 	switch {
-	case (strings.HasPrefix(s, "0x") || strings.HasPrefix(s, "0X")) && len(s) > 2:
+	case (strings.HasPrefix(s, "0b") || strings.HasPrefix(s, "0B")) && len(s) > 2:
 		s = s[2:]
-		base = 16
+		base = 2
 	case (strings.HasPrefix(s, "0") || strings.HasPrefix(s, "o")) && len(s) > 1:
 		s = s[1:]
 		base = 8
+	case (strings.HasPrefix(s, "0x") || strings.HasPrefix(s, "0X")) && len(s) > 2:
+		s = s[2:]
+		base = 16
 	}
 
 	if base == 10 {
