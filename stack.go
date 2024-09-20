@@ -1,7 +1,7 @@
 // This file is part of rpn, a simple and useful CLI RPN calculator.
 // For further information, check https://github.com/marcopaganini/rpn
 //
-// (C) 2024 by Marco Paganini <paganini AT paganini DOT net>
+// (C) Sep/2024 by Marco Paganini <paganini AT paganini DOT net>
 package main
 
 import (
