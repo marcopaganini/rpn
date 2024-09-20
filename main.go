@@ -86,13 +86,24 @@ func help(ops []interface{}) {
 	}
 }
 
-func main() {
-	var debug bool
+// calc contains the bulk of the calculator code. It takes a stack and an
+// optional string argument. If string the string is not empty, it executes the
+// oeprations in the string and returns. If the string is empty, it enters a
+// readline loop accepting commands from the user.
+func calc(stack *stackType, cmd string) error {
+	// Wait for entry until Ctrl-D or q is issued
+	var (
+		line  string
+		err   error
+		rl    *readline.Instance
+		debug bool
+	)
+
+	// Single command execution?
+	single := (cmd != "")
 
 	// Default == decimal for printouts
 	base := 10
-
-	stack := &stackType{}
 
 	// Colors
 	bold := color.New(color.Bold).SprintFunc()
@@ -193,13 +204,14 @@ func main() {
 
 	opmap := oplistToMap(ops)
 
-	rl, err := readline.New("> ")
-	if err != nil {
-		log.Fatal(err)
+	if !single {
+		rl, err = readline.New("> ")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer rl.Close()
 	}
-	defer rl.Close()
 
-	// Wait for entry until Ctrl-D or q is issued
 	for {
 		// Save a copy of the stack so we can restore it to the previous state
 		// before this line was processed (in case of errors.)
@@ -209,10 +221,15 @@ func main() {
 			stack.print(base)
 		}
 
-		line, err := rl.Readline()
-		if err != nil { // io.EOF
-			break
+		// By default, use the passed command. If no command, initialize readline.
+		line = cmd
+		if !single {
+			line, err = rl.Readline()
+			if err != nil { // io.EOF
+				break
+			}
 		}
+
 		line = strings.TrimSpace(line)
 
 		// Split into fields and process
@@ -223,6 +240,9 @@ func main() {
 			if ok {
 				err := stack.operation(handler)
 				if err != nil {
+					if single {
+						return err
+					}
 					fmt.Printf(red("ERROR: %v\n"), err)
 					stack.restore()
 					break
@@ -248,7 +268,8 @@ func main() {
 			// At this point, it's either a number or not recognized.
 			n, err := atof(token)
 			if err != nil {
-				fmt.Printf("Not a number or operator: %q. Use \"help\" for online help.\n", token)
+				fmt.Printf(red("Not a number or operator: %q.\n"), token)
+				fmt.Println(red("Use \"help\" for online help."))
 				stack.restore()
 				continue
 			}
@@ -256,8 +277,21 @@ func main() {
 			stack.push(n)
 			continue
 		}
+
+		// Break after the first iteration if a command is passed.
+		if single {
+			break
+		}
 		if autoprint {
 			stack.printTop(base)
 		}
+	}
+	return nil
+}
+
+func main() {
+	stack := &stackType{}
+	if err := calc(stack, ""); err != nil {
+		log.Fatal(err)
 	}
 }
