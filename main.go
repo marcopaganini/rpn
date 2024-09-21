@@ -30,12 +30,12 @@ func atof(s string) (float64, error) {
 	case (strings.HasPrefix(s, "0b") || strings.HasPrefix(s, "0B")) && len(s) > 2:
 		s = s[2:]
 		base = 2
-	case (strings.HasPrefix(s, "0") || strings.HasPrefix(s, "o")) && len(s) > 1:
-		s = s[1:]
-		base = 8
 	case (strings.HasPrefix(s, "0x") || strings.HasPrefix(s, "0X")) && len(s) > 2:
 		s = s[2:]
 		base = 16
+	case (strings.HasPrefix(s, "0") || strings.HasPrefix(s, "o")) && len(s) > 1:
+		s = s[1:]
+		base = 8
 	}
 
 	if base == 10 {
@@ -52,17 +52,13 @@ func atof(s string) (float64, error) {
 func calc(stack *stackType, cmd string) error {
 	// Wait for entry until Ctrl-D or q is issued
 	var (
-		line  string
-		err   error
-		rl    *readline.Instance
-		debug bool
+		line string
+		err  error
+		rl   *readline.Instance
 	)
 
 	// Single command execution?
 	single := (cmd != "")
-
-	// Default == decimal for printouts
-	base := 10
 
 	// Colors
 	red := color.New(color.FgRed).SprintFunc()
@@ -84,8 +80,8 @@ func calc(stack *stackType, cmd string) error {
 		// before this line was processed (in case of errors.)
 		stack.save()
 
-		if debug {
-			stack.print(base)
+		if ops.debug {
+			stack.print(ops.base)
 		}
 
 		// By default, use the passed command. If no command, initialize readline.
@@ -151,7 +147,7 @@ func calc(stack *stackType, cmd string) error {
 			break
 		}
 		if autoprint {
-			stack.printTop(base)
+			stack.printTop(ops.base)
 		}
 	}
 	return nil
