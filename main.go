@@ -114,6 +114,20 @@ func calc(stack *stackType, cmd string) error {
 				// function, set autoprint to true. This will cause the top of
 				// the stack results to be printed.
 				autoprint = (len(results) > 0 || remove > 0)
+
+				if !single {
+					// Set readline prompt based on base.
+					switch ops.base {
+					case 10:
+						rl.SetPrompt("> ")
+					case 8:
+						rl.SetPrompt("oct> ")
+					case 16:
+						rl.SetPrompt("hex> ")
+					case 2:
+						rl.SetPrompt("bin> ")
+					}
+				}
 				continue
 			}
 
