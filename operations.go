@@ -216,6 +216,40 @@ func newOpsType(stack *stackType) *opsType {
 	return ret
 }
 
+// operation performs an operation on the stack and returns a slice of elements
+// added to the stack and the number of elements removed from the stack.
+func operation(handler ophandler, stack *stackType) ([]float64, int, error) {
+	// Make sure we have enough arguments in the list.
+	length := len(stack.list)
+	if length < handler.numArgs {
+		return nil, 0, fmt.Errorf("this operation requires at least %d items in the stack", handler.numArgs)
+	}
+
+	// args contains a copy of all elements in the stack reversed.  This makes
+	// it easier for functions to use x as a[0], y as a[1], etc.
+	args := []float64{}
+	for ix := length - 1; ix >= 0; ix-- {
+		args = append(args, stack.list[ix])
+	}
+
+	ret, remove, err := handler.fn(args)
+	if err != nil {
+		return nil, 0, err
+	}
+	// Remove the number of arguments this operation consumes if needed.
+	if remove > 0 && len(stack.list) < remove {
+		return nil, 0, fmt.Errorf("(internal) operation %q wants to pop %d items, but we only have %d", handler.op, remove, len(stack.list))
+	}
+
+	stack.list = stack.list[0 : len(stack.list)-remove]
+
+	// Add the return values from the function to the stack if we have any.
+	if len(ret) > 0 {
+		stack.push(ret...)
+	}
+	return ret, remove, nil
+}
+
 // help displays the help message to the screen based on the contents of opmap.
 func (x opsType) help() {
 	bold := color.New(color.Bold).SprintFunc()

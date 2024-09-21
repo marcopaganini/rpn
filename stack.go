@@ -41,40 +41,6 @@ func (x *stackType) clear() {
 	x.list = []float64{}
 }
 
-// operation performs an operation on the stack and returns a slice of elements
-// added to the stack and the number of elements removed from the stack.
-func (x *stackType) operation(handler ophandler) ([]float64, int, error) {
-	// Make sure we have enough arguments in the list.
-	length := len(x.list)
-	if length < handler.numArgs {
-		return nil, 0, fmt.Errorf("this operation requires at least %d items in the stack", handler.numArgs)
-	}
-
-	// args contains a copy of all elements in the stack reversed.  This makes
-	// it easier for functions to use x as a[0], y as a[1], etc.
-	args := []float64{}
-	for ix := length - 1; ix >= 0; ix-- {
-		args = append(args, x.list[ix])
-	}
-
-	ret, remove, err := handler.fn(args)
-	if err != nil {
-		return nil, 0, err
-	}
-	// Remove the number of arguments this operation consumes if needed.
-	if remove > 0 && len(x.list) < remove {
-		return nil, 0, fmt.Errorf("(internal) operation %q wants to pop %d items, but we only have %d", handler.op, remove, len(x.list))
-	}
-
-	x.list = x.list[0 : len(x.list)-remove]
-
-	// Add the return values from the function to the stack if we have any.
-	if len(ret) > 0 {
-		x.push(ret...)
-	}
-	return ret, remove, nil
-}
-
 // top returns the topmost element on the stack (without popping it).
 func (x *stackType) top() float64 {
 	if len(x.list) == 0 {

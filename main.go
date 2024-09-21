@@ -105,7 +105,7 @@ func calc(stack *stackType, cmd string) error {
 			// Check operator map
 			handler, ok := opmap[token]
 			if ok {
-				results, remove, err := stack.operation(handler)
+				results, remove, err := operation(handler, stack)
 				if err != nil {
 					if single {
 						return err
