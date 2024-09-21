@@ -31,6 +31,10 @@ func TestRPN(t *testing.T) {
 		{input: "10 mod", want: 5},
 		{input: "fac", want: 120},
 		{input: "10 %", want: 12},
+		{input: "2 ^", want: 144},
+		{input: "sqr", want: 12},
+		{input: "3 ^", want: 1728},
+		{input: "cbr", want: 12},
 		{input: "c", want: 0},
 
 		// Bitwise operations and base input modes.
