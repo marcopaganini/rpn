@@ -156,12 +156,13 @@ func calc(stack *stackType, cmd string) error {
 			continue
 		}
 
+		if autoprint {
+			stack.printTop(ops.base, single)
+		}
+
 		// Break after the first iteration if a command is passed.
 		if single {
 			break
-		}
-		if autoprint {
-			stack.printTop(ops.base)
 		}
 	}
 	return nil
@@ -169,7 +170,14 @@ func calc(stack *stackType, cmd string) error {
 
 func main() {
 	stack := &stackType{}
-	if err := calc(stack, ""); err != nil {
+
+	// treat the cmdline arguments as an expression to be processed
+	expr := ""
+	for _, arg := range os.Args[1:] {
+		expr += arg + " "
+	}
+
+	if err := calc(stack, expr); err != nil {
 		log.Fatal(err)
 	}
 }

@@ -51,8 +51,17 @@ func (x *stackType) top() float64 {
 }
 
 // printTop displays the top of the stack using the base indicated.
-func (x *stackType) printTop(base int) {
-	color.Cyan("= %s", formatNumber(x.top(), base))
+func (x *stackType) printTop(base int, args ...bool) {
+	plain := false
+	top := formatNumber(x.top(), base)
+	if len(args) > 0 {
+		plain = args[0]
+	}
+	if plain {
+		println(top)
+	} else {
+		color.Cyan("= %s", top)
+	}
 }
 
 // print displays the contents of the stack using the base indicated.
