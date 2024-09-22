@@ -35,6 +35,7 @@ func TestRPN(t *testing.T) {
 		{input: "sqr", want: 12},
 		{input: "3 ^", want: 1728},
 		{input: "cbr", want: 12},
+		{input: "c 1 2 3 4 sum", want: 10},
 		{input: "c", want: 0},
 
 		// Bitwise operations and base input modes.

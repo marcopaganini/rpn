@@ -102,6 +102,14 @@ func newOpsType(stack *stackType) *opsType {
 			return []float64{a[1] * a[0] / 100}, 2, nil
 		}},
 
+		ophandler{"sum", "Sum all elements in stack", 1, func(a []float64) ([]float64, int, error) {
+			var sum float64
+			for _, v := range a {
+				sum += v
+			}
+			return []float64{sum}, len(a), nil
+		}},
+
 		ophandler{"fac", "Calculate factorial of x", 1, func(a []float64) ([]float64, int, error) {
 			x := uint64(a[0])
 			if x <= 0 {
