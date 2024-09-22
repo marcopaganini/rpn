@@ -142,7 +142,7 @@ func newOpsType(stack *stackType) *opsType {
 			return nil, 0, nil
 		}},
 		ophandler{"=", "Print top of stack (x)", 0, func(_ []float64) ([]float64, int, error) {
-			fmt.Println(stack.top())
+			stack.printTop(ret.base)
 			return nil, 0, nil
 		}},
 		ophandler{"d", "Drop top of stack (x)", 1, func(_ []float64) ([]float64, int, error) {
