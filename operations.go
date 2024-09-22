@@ -95,7 +95,7 @@ func newOpsType(stack *stackType) *opsType {
 		ophandler{"sqr", "Calculate square root of x", 1, func(a []float64) ([]float64, int, error) {
 			return []float64{math.Sqrt(a[0])}, 1, nil
 		}},
-		ophandler{"cbr", "Calculate cube of x", 1, func(a []float64) ([]float64, int, error) {
+		ophandler{"cbr", "Calculate cubic root of x", 1, func(a []float64) ([]float64, int, error) {
 			return []float64{math.Cbrt(a[0])}, 1, nil
 		}},
 		ophandler{"%", "Calculate x% of y", 2, func(a []float64) ([]float64, int, error) {
