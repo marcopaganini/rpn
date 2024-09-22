@@ -156,6 +156,9 @@ func newOpsType(stack *stackType) *opsType {
 		ophandler{"d", "Drop top of stack (x)", 1, func(_ []float64) ([]float64, int, error) {
 			return nil, 1, nil
 		}},
+		ophandler{"x", "Exchange x and y", 2, func(a []float64) ([]float64, int, error) {
+			return []float64{a[0], a[1]}, 2, nil
+		}},
 
 		"",
 		bold("Math and Physical constants"),
