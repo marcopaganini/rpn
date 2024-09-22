@@ -68,7 +68,7 @@ func TestRPN(t *testing.T) {
 			}
 			got := stack.top()
 			if got != tt.want {
-				t.Fatalf("diff: input %q, want %.8f, got %.8f.", tt.input, tt.want, got)
+				t.Fatalf("diff: input: %q, want: %.8f, got: %.8f", tt.input, tt.want, got)
 			}
 			continue
 		}
@@ -77,5 +77,44 @@ func TestRPN(t *testing.T) {
 		if err == nil {
 			t.Errorf("Got no error, want error")
 		}
+	}
+}
+
+func TestFormatNumber(t *testing.T) {
+	casetests := []struct {
+		base  int
+		input float64
+		want  string
+	}{
+		// Decimal
+		{10, 0, "0"},
+		{10, 1, "1"},
+		{10, 999, "999"},
+		{10, 1000, "1000 (1,000)"},
+		{10, 1000000, "1000000 (1,000,000)"},
+		{10, 1000000000000000, "1000000000000000 (1,000,000,000,000,000)"},
+		{10, 10000.3333333333, "10000.333333 (10,000.333333)"},
+		{10, -10000.3333333333, "-10000.333333 (-10,000.333333)"},
+
+		// Binary
+		{2, 0b11111111, "0b11111111"},
+		{2, 0b11111111 + 0.5, "0b11111111 (truncated from 255.5)"},
+		{2, (0b11111111 + 0.5) * -1, "0b1111111111111111111111111111111111111111111111111111111100000001 (truncated from -255.5)"},
+
+		// Octal
+		{8, 0377, "0377"},
+		{8, 0377 + 0.5, "0377 (truncated from 255.5)"},
+		{8, (0377 + 0.5) * -1, "01777777777777777777401 (truncated from -255.5)"},
+
+		// Hex
+		{16, 0xff, "0xff"},
+		{16, (0xff + 0.5) * -1, "0xffffffffffffff01 (truncated from -255.5)"},
+	}
+	for _, tt := range casetests {
+		got := formatNumber(tt.input, tt.base)
+		if got != tt.want {
+			t.Fatalf("diff: base: %d, input: %v, want: %q, got: %q", tt.base, tt.input, tt.want, got)
+		}
+		continue
 	}
 }

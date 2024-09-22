@@ -4,6 +4,7 @@ go 1.22
 
 require (
 	github.com/chzyer/readline v1.5.1
+	github.com/dustin/go-humanize v1.0.1
 	github.com/fatih/color v1.17.0
 )
 

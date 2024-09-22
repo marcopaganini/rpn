@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/dustin/go-humanize"
 	"github.com/fatih/color"
 )
 
@@ -75,26 +76,28 @@ func (x *stackType) print(base int) {
 // formatNumber formats the number using base. For bases different than 10,
 // non-integer floating numbers are truncated.
 func formatNumber(n float64, base int) string {
-	// default format when decimals are present.
-	decfmt := "%.8f"
-	if base == 10 && math.Floor(n) == n {
-		decfmt = "%.f"
-	}
-
 	// Indicate possible truncation
 	suffix := ""
+	// clean = double as ascii, without non-significant decimal zeroes.
+	clean := humanize.FtoaWithDigits(n, 6)
+
 	if base != 10 && math.Floor(n) != n {
-		suffix = fmt.Sprintf("(truncated from %v)", n)
+		suffix = fmt.Sprintf(" (truncated from %s)", clean)
 	}
 
 	switch {
 	case base == 2:
-		return fmt.Sprintf("0b%b %s", uint64(n), suffix)
+		return fmt.Sprintf("0b%b%s", uint64(n), suffix)
 	case base == 8:
-		return fmt.Sprintf("0%o %s", uint64(n), suffix)
+		return fmt.Sprintf("0%o%s", uint64(n), suffix)
 	case base == 16:
-		return fmt.Sprintf("0x%x %s", uint64(n), suffix)
+		return fmt.Sprintf("0x%x%s", uint64(n), suffix)
 	default:
-		return fmt.Sprintf(decfmt+" %s", n, suffix)
+		h := humanize.CommafWithDigits(n, 6)
+		// Only print humanized format when it differs from original value.
+		if h != clean {
+			suffix = " (" + h + ")"
+		}
+		return clean + suffix
 	}
 }
