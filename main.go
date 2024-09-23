@@ -157,7 +157,11 @@ func calc(stack *stackType, cmd string) error {
 		}
 
 		if autoprint {
-			stack.printTop(ops.base, single)
+			if single {
+				fmt.Println(stack.top()) // plain print to stdout
+			} else {
+				stack.printTop(ops.base) // pretty print to terminal
+			}
 		}
 
 		// Break after the first iteration if a command is passed.
