@@ -171,13 +171,7 @@ func calc(stack *stackType, cmd string) error {
 func main() {
 	stack := &stackType{}
 
-	// treat the cmdline arguments as an expression to be processed
-	expr := ""
-	for _, arg := range os.Args[1:] {
-		expr += arg + " "
-	}
-
-	if err := calc(stack, expr); err != nil {
+	if err := calc(stack, strings.Join(os.Args[1:], " ")); err != nil {
 		log.Fatal(err)
 	}
 }
