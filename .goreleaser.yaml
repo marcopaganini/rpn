@@ -16,7 +16,7 @@ before:
     - go generate ./...
 
 builds:
-    env:
+  - env:
       - CGO_ENABLED=0
     goos:
       - linux
