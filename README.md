@@ -43,7 +43,7 @@ To download and install automatically (under `/usr/local/bin`), just run:
 
 ```bash
 curl -s \
-  'https://raw.githubusercontent.com/marcopaganini/installer/master/install.sh' |
+  'https://raw.githubusercontent.com/marcopaganini/rpn/master/install.sh' |
   sudo sh -s -- marcopaganini/rpn
 ```
 
@@ -54,7 +54,7 @@ To download and install under another directory (for example, `$HOME/.local/bin`
 
 ```bash
 curl -s \
-  'https://raw.githubusercontent.com/marcopaganini/installer/master/install.sh' |
+  'https://raw.githubusercontent.com/marcopaganini/rpn/master/install.sh' |
   sh -s -- marcopaganini/rpn "$HOME/.local/bin"
 ```
 
