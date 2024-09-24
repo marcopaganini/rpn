@@ -6,8 +6,8 @@
 package main
 
 import (
-	"testing"
 	"os"
+	"testing"
 )
 
 func TestRPN(t *testing.T) {
