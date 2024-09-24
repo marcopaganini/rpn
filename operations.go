@@ -139,7 +139,7 @@ func newOpsType(stack *stackType) *opsType {
 
 		ophandler{"fib", "Calculate fibonacci of x", 1, func(a []float64) ([]float64, int, error) {
 			x := a[0]
-			if x - float64(uint64(x)) != 0 {
+			if x-float64(uint64(x)) != 0 {
 				return nil, 1, errors.New("fibonacci requires an integer number")
 			}
 			if x < 1. {
