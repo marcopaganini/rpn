@@ -33,7 +33,9 @@ func atof(s string) (float64, error) {
 	case (strings.HasPrefix(s, "0x") || strings.HasPrefix(s, "0X")) && len(s) > 2:
 		s = s[2:]
 		base = 16
-	case (strings.HasPrefix(s, "0") || strings.HasPrefix(s, "o")) && len(s) > 1:
+	// Numbers starting with 0 must account for 0.xx fractional numbers not
+	// being octal numbers.
+	case (strings.HasPrefix(s, "0") || strings.HasPrefix(s, "o")) && !strings.HasPrefix(s, "0.") && len(s) > 1:
 		s = s[1:]
 		base = 8
 	}
