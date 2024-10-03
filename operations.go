@@ -41,6 +41,18 @@ type (
 	opmapType map[string]ophandler
 )
 
+func fib(x uint64) uint64 {
+	if x < 1 || x > 45 {
+		// less than one is outside the domain of the mathematical function,
+		// and more than 45 overflows uint64 and results in infinite recursion
+		panic("fib() called with too small or large value!")
+	}
+	if x <= 2 {
+		return 1
+	}
+	return fib(x-1) + fib(x-2)
+}
+
 func newOpsType(stack *stackType) *opsType {
 	bold := color.New(color.Bold).SprintFunc()
 
@@ -112,6 +124,9 @@ func newOpsType(stack *stackType) *opsType {
 
 		ophandler{"fac", "Calculate factorial of x", 1, func(a []float64) ([]float64, int, error) {
 			x := uint64(a[0])
+			if float64(x) != a[0] {
+				return nil, 1, errors.New("factorial requires an integer number")
+			}
 			if x <= 0 {
 				return nil, 1, errors.New("factorial requires a positive number")
 			}
@@ -121,6 +136,21 @@ func newOpsType(stack *stackType) *opsType {
 			}
 			return []float64{float64(fact)}, 1, nil
 		}},
+
+		ophandler{"fib", "Calculate fibonacci of x", 1, func(a []float64) ([]float64, int, error) {
+			x := a[0]
+			if x-float64(uint64(x)) != 0 {
+				return nil, 1, errors.New("fibonacci requires an integer number")
+			}
+			if x < 1. {
+				return nil, 1, errors.New("fibonacci requires a positive number")
+			}
+			if x > 45. {
+				return nil, 1, errors.New("fibonacci can currently only be computed for numbers smaller than 45")
+			}
+			return []float64{float64(fib(uint64(x)))}, 1, nil
+		}},
+
 		"",
 		bold("Bitwise Operations"),
 		ophandler{"and", "Logical AND between x and y", 2, func(a []float64) ([]float64, int, error) {
