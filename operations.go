@@ -140,6 +140,14 @@ func newOpsType(stack *stackType) *opsType {
 		}},
 
 		"",
+		bold("Miscellaneous Operations"),
+		ophandler{"f2c", "Convert x in Fahrenheit to Celsius", 1, func(a []float64) ([]float64, int, error) {
+			return []float64{(a[0] - 32) * 5 / 9}, 1, nil
+		}},
+		ophandler{"c2f", "Convert x in Celsius to Fahrenheit", 1, func(a []float64) ([]float64, int, error) {
+			return []float64{a[0]*9/5 + 32}, 1, nil
+		}},
+		"",
 		bold("Stack Operations"),
 		ophandler{"p", "Display stack", 0, func(_ []float64) ([]float64, int, error) {
 			stack.print(ret.base)

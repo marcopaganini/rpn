@@ -62,6 +62,14 @@ func TestRPN(t *testing.T) {
 		{input: "2 rshift", want: 0x1111},
 		{input: "0b00100010 0B01000100 015 o20 0x1000 0x2000 + + + + +", want: 12419},
 		{input: "d d", want: 0},
+
+		// Miscellaneous operations
+		{input: "212 f2c", want: 100},
+		{input: "c2f", want: 212},
+		{input: "-40 f2c", want: -40},
+		{input: "-10 c2f", want: 14},
+		{input: "0 c2f", want: 32},
+		{input: "c", want: 0},
 	}
 
 	stack := &stackType{}
