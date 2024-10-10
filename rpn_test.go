@@ -6,6 +6,7 @@
 package main
 
 import (
+	"os"
 	"testing"
 )
 
@@ -131,4 +132,10 @@ func TestFormatNumber(t *testing.T) {
 		}
 		continue
 	}
+}
+
+func Example_main() {
+	os.Args = []string{"rpn", "1", "2", "3", "+", "+", "6", "-"}
+	main()
+	// Output: 0
 }
