@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -77,6 +78,12 @@ func calc(stack *stackType, cmd string) error {
 		defer rl.Close()
 	}
 
+	// Remove all extraneous characters from the input. This will silently
+	// remove undesirable formatting characters, making cut/paste operations
+	// simpler. If you add a new operation as a single special character, make
+	// sure it's represented here.
+	cleanRe := regexp.MustCompile(`[^-+./*%^=[:alnum:]\s]`)
+
 	for {
 		// Save a copy of the stack so we can restore it to the previous state
 		// before this line was processed (in case of errors.)
@@ -96,6 +103,7 @@ func calc(stack *stackType, cmd string) error {
 		}
 
 		line = strings.TrimSpace(line)
+		line = cleanRe.ReplaceAllString(line, "")
 
 		// Split into fields and process
 		autoprint := false

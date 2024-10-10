@@ -43,6 +43,7 @@ func TestRPN(t *testing.T) {
 		{input: "0.25 4 *", want: 1},
 		{input: ".2 5 *", want: 1},
 		{input: "c", want: 0},
+		{input: "$2,500.00 €3,500.00 +", want: 6000},
 
 		// Bitwise operations and base input modes.
 		{input: "0x00ff 0xff00 or", want: 0xffff},
