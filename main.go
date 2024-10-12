@@ -145,7 +145,9 @@ func calc(stack *stackType, cmd string) error {
 
 			// Help
 			if token == "help" || token == "h" || token == "?" {
-				ops.help()
+				if err := ops.help(); err != nil {
+					fmt.Println(red(err))
+				}
 				continue
 			}
 

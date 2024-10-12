@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"strings"
 
 	"github.com/fatih/color"
 )
@@ -52,18 +53,16 @@ func radOrDeg(n float64, degmode bool) float64 {
 }
 
 func newOpsType(stack *stackType) *opsType {
-	bold := color.New(color.Bold).SprintFunc()
-
 	ret := &opsType{
 		base:  10,
 		stack: stack,
 	}
 	ret.ops = []interface{}{
 		// Header
-		bold("Online help for ", programTitle, "."),
-		bold("See http://github.com/marcopaganini/rpn for full details."),
+		"BOLD:Online help for " + programTitle + ".",
+		"BOLD:See http://github.com/marcopaganini/rpn for full details.",
 		"",
-		bold("Data entry:"),
+		"BOLD:Data entry:",
 		"  number <ENTER> - push a number on top of the stack.",
 		"  operation <ENTER> - perform an operation on the stack (see below).",
 		"",
@@ -72,9 +71,9 @@ func newOpsType(stack *stackType) *opsType {
 		"",
 		"  Prefix numbers with 0x to indicate hexadecimal, 0 for octal.",
 		"",
-		bold("Operations:"),
+		"BOLD:Operations:",
 		"",
-		bold("Basic Operations"),
+		"BOLD:Basic Operations",
 		ophandler{"+", "Add x to y", 2, func(a []float64) ([]float64, int, error) {
 			return []float64{a[1] + a[0]}, 2, nil
 		}},
@@ -132,7 +131,7 @@ func newOpsType(stack *stackType) *opsType {
 			return []float64{float64(fact)}, 1, nil
 		}},
 		"",
-		bold("Bitwise Operations"),
+		"BOLD:Bitwise Operations",
 		ophandler{"and", "Logical AND between x and y", 2, func(a []float64) ([]float64, int, error) {
 			return []float64{float64(uint64(a[1]) & uint64(a[0]))}, 2, nil
 		}},
@@ -149,7 +148,7 @@ func newOpsType(stack *stackType) *opsType {
 			return []float64{float64(uint64(a[1]) >> uint64(a[0]))}, 2, nil
 		}},
 		"",
-		bold("Trigonometric Operations"),
+		"BOLD:Trigonometric Operations",
 		ophandler{"sin", "Sine of x", 1, func(a []float64) ([]float64, int, error) {
 			return []float64{math.Sin(radOrDeg(a[0], ret.degmode))}, 1, nil
 		}},
@@ -170,7 +169,7 @@ func newOpsType(stack *stackType) *opsType {
 		}},
 
 		"",
-		bold("Miscellaneous Operations"),
+		"BOLD:Miscellaneous Operations",
 		ophandler{"f2c", "Convert x in Fahrenheit to Celsius", 1, func(a []float64) ([]float64, int, error) {
 			return []float64{(a[0] - 32) * 5 / 9}, 1, nil
 		}},
@@ -178,7 +177,7 @@ func newOpsType(stack *stackType) *opsType {
 			return []float64{a[0]*9/5 + 32}, 1, nil
 		}},
 		"",
-		bold("Stack Operations"),
+		"BOLD:Stack Operations",
 		ophandler{"p", "Display stack", 0, func(_ []float64) ([]float64, int, error) {
 			stack.print(ret.base)
 			return nil, 0, nil
@@ -199,7 +198,7 @@ func newOpsType(stack *stackType) *opsType {
 		}},
 
 		"",
-		bold("Math and Physical constants"),
+		"BOLD:Math and Physical constants",
 		ophandler{"PI", "The famous transcedental number", 0, func(_ []float64) ([]float64, int, error) {
 			return []float64{math.Pi}, 0, nil
 		}},
@@ -214,7 +213,7 @@ func newOpsType(stack *stackType) *opsType {
 		}},
 
 		"",
-		bold("Computer constants"),
+		"BOLD:Computer constants",
 		ophandler{"KB", "Kilobyte", 0, func(_ []float64) ([]float64, int, error) {
 			return []float64{math.Pow(10, 3)}, 0, nil
 		}},
@@ -241,7 +240,7 @@ func newOpsType(stack *stackType) *opsType {
 		}},
 
 		"",
-		bold("Program Control"),
+		"BOLD:Program Control",
 		ophandler{"dec", "Output in decimal", 0, func(_ []float64) ([]float64, int, error) {
 			ret.base = 10
 			ret.degmode = false
@@ -278,7 +277,7 @@ func newOpsType(stack *stackType) *opsType {
 			return nil, 0, nil
 		}},
 		"",
-		bold("Please Note:"),
+		"BOLD:Please Note:",
 		"  - x means the number at the top of the stack",
 		"  - y means the second number from the top of the stack",
 	}
@@ -319,18 +318,6 @@ func operation(handler ophandler, stack *stackType) ([]float64, int, error) {
 	return ret, remove, nil
 }
 
-// help displays the help message to the screen based on the contents of opmap.
-func (x opsType) help() {
-	bold := color.New(color.Bold).SprintFunc()
-	for _, v := range x.ops {
-		if handler, ok := v.(ophandler); ok {
-			fmt.Printf("  - %s: %s\n", bold(handler.op), handler.desc)
-			continue
-		}
-		fmt.Println(v)
-	}
-}
-
 // opmap returns a map of op (command) -> ophandler that can be easily used
 // later to find the function to be executed. It takes a slice of interfaces
 // and returns a map[string][ophandler].
@@ -343,4 +330,35 @@ func (x opsType) opmap() opmapType {
 		}
 	}
 	return ret
+}
+
+// help displays the help message to the screen based on the contents of opmap.
+func (x opsType) help() error {
+	pager, err := newPager()
+	if err != nil {
+		return err
+	}
+	if !pager.colorSupport {
+		color.NoColor = true
+	}
+	bold := color.New(color.Bold).SprintFunc()
+
+	for _, v := range x.ops {
+		// ophandler lines.
+		if handler, ok := v.(ophandler); ok {
+			fmt.Fprintf(pager.w, "  - %s: %s\n", bold(handler.op), handler.desc)
+			continue
+		}
+		// Regular strings.
+		// Anything starting with "BOLD:" is printed in bold.
+		if s, ok := v.(string); ok {
+			if strings.HasPrefix(s, "BOLD:") {
+				s = bold(s[5:])
+			}
+			fmt.Fprintln(pager.w, s)
+		}
+	}
+	// Turn color support back on.
+	color.NoColor = false
+	return pager.wait()
 }
