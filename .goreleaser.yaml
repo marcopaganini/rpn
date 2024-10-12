@@ -30,6 +30,7 @@ archives:
     files:
       - LICENSE
       - README.md
+      - CHANGELOG.md
     # use zip for windows archives
     format_overrides:
       - goos: windows
@@ -59,6 +60,8 @@ nfpms:
         dst: /usr/share/doc/rpn/README.md
       - src: LICENSE
         dst: /usr/share/doc/rpn/LICENSE.txt
+      - src: CHANGELOG.md
+        dst: /usr/share/doc/rpn/CHANGELOG.md
 
 changelog:
   sort: asc
