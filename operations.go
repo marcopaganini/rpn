@@ -30,16 +30,26 @@ type (
 	// their descriptions. The operations go in a list of interfaces so
 	// we can also use strings and print them in the help() function.
 	opsType struct {
-		base  int           // Base for printing (default = 10)
-		debug bool          // Debug state
-		stack *stackType    // stack object to use
-		ops   []interface{} // list of ophandlers & descriptions
+		base    int           // Base for printing (default = 10)
+		debug   bool          // Debug state
+		degmode bool          // Degrees mode (default = Radians)
+		stack   *stackType    // stack object to use
+		ops     []interface{} // list of ophandlers & descriptions
 	}
 
 	// opmapType is a handler to operation map, used to find the right
 	// operation function to call.
 	opmapType map[string]ophandler
 )
+
+// radOrDeg converts the value passed to radians if degmode (degrees
+// mode) is set. Otherwise, it just returns the same value (radians).
+func radOrDeg(n float64, degmode bool) float64 {
+	if degmode {
+		return n * math.Pi / 180
+	}
+	return n
+}
 
 func newOpsType(stack *stackType) *opsType {
 	bold := color.New(color.Bold).SprintFunc()
@@ -138,6 +148,26 @@ func newOpsType(stack *stackType) *opsType {
 		ophandler{"rshift", "Shift y right x times", 2, func(a []float64) ([]float64, int, error) {
 			return []float64{float64(uint64(a[1]) >> uint64(a[0]))}, 2, nil
 		}},
+		"",
+		bold("Trigonometric Operations"),
+		ophandler{"sin", "Sine of x", 1, func(a []float64) ([]float64, int, error) {
+			return []float64{math.Sin(radOrDeg(a[0], ret.degmode))}, 1, nil
+		}},
+		ophandler{"cos", "Cosine of x", 1, func(a []float64) ([]float64, int, error) {
+			return []float64{math.Cos(radOrDeg(a[0], ret.degmode))}, 1, nil
+		}},
+		ophandler{"tan", "Tangent of x", 1, func(a []float64) ([]float64, int, error) {
+			return []float64{math.Tan(radOrDeg(a[0], ret.degmode))}, 1, nil
+		}},
+		ophandler{"asin", "Arcsine of x", 1, func(a []float64) ([]float64, int, error) {
+			return []float64{math.Asin(radOrDeg(a[0], ret.degmode))}, 1, nil
+		}},
+		ophandler{"acos", "Arccosine of x", 1, func(a []float64) ([]float64, int, error) {
+			return []float64{math.Acos(radOrDeg(a[0], ret.degmode))}, 1, nil
+		}},
+		ophandler{"atan", "Arctangent of x", 1, func(a []float64) ([]float64, int, error) {
+			return []float64{math.Atan(radOrDeg(a[0], ret.degmode))}, 1, nil
+		}},
 
 		"",
 		bold("Miscellaneous Operations"),
@@ -214,18 +244,32 @@ func newOpsType(stack *stackType) *opsType {
 		bold("Program Control"),
 		ophandler{"dec", "Output in decimal", 0, func(_ []float64) ([]float64, int, error) {
 			ret.base = 10
+			ret.degmode = false
 			return nil, 0, nil
 		}},
 		ophandler{"bin", "Output in binary", 0, func(_ []float64) ([]float64, int, error) {
 			ret.base = 2
+			ret.degmode = false
 			return nil, 0, nil
 		}},
 		ophandler{"oct", "Output in octal", 0, func(_ []float64) ([]float64, int, error) {
 			ret.base = 8
+			ret.degmode = false
 			return nil, 0, nil
 		}},
 		ophandler{"hex", "Output in hexadecimal", 0, func(_ []float64) ([]float64, int, error) {
 			ret.base = 16
+			ret.degmode = false
+			return nil, 0, nil
+		}},
+		ophandler{"deg", "All angles in degrees", 0, func(_ []float64) ([]float64, int, error) {
+			ret.base = 10
+			ret.degmode = true
+			return nil, 0, nil
+		}},
+		ophandler{"rad", "All angles in radians", 0, func(_ []float64) ([]float64, int, error) {
+			ret.base = 10
+			ret.degmode = false
 			return nil, 0, nil
 		}},
 		ophandler{"debug", "Toggle debugging", 0, func(_ []float64) ([]float64, int, error) {

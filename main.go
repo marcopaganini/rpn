@@ -126,15 +126,17 @@ func calc(stack *stackType, cmd string) error {
 				autoprint = (len(results) > 0 || remove > 0)
 
 				if !single {
-					// Set readline prompt based on base.
-					switch ops.base {
-					case 10:
+					// Set readline prompt based on base and degrees/radian mode.
+					switch {
+					case ops.degmode:
+						rl.SetPrompt("deg> ")
+					case ops.base == 10:
 						rl.SetPrompt("> ")
-					case 8:
+					case ops.base == 8:
 						rl.SetPrompt("oct> ")
-					case 16:
+					case ops.base == 16:
 						rl.SetPrompt("hex> ")
-					case 2:
+					case ops.base == 2:
 						rl.SetPrompt("bin> ")
 					}
 				}

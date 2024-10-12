@@ -6,6 +6,8 @@
 package main
 
 import (
+	"fmt"
+	"math"
 	"os"
 	"testing"
 )
@@ -42,8 +44,23 @@ func TestRPN(t *testing.T) {
 		{input: "c", want: 0},
 		{input: "0.25 4 *", want: 1},
 		{input: ".2 5 *", want: 1},
-		{input: "c", want: 0},
 		{input: "$2,500.00 €3,500.00 +", want: 6000},
+		{input: "c", want: 0},
+
+		// Trigonometric functions.
+		{input: "deg 90 sin", want: 1},
+		{input: "rad 90 PI * 180 / sin", want: 1},
+		{input: "deg 0 cos", want: 1},
+		{input: "rad 60 PI * 180 / cos", want: 0.5},
+		{input: "deg 30 tan", want: math.Sqrt(3) / 3},
+		{input: "rad 60 PI * 180 / tan", want: math.Sqrt(3)},
+		{input: "deg -1 180 * PI / asin", want: -math.Pi / 2},
+		{input: "rad -1 asin", want: -math.Pi / 2},
+		{input: "rad 0 acos", want: math.Pi / 2},
+		{input: "rad 1 acos", want: 0},
+		{input: "deg 0.5 180 * PI / acos", want: math.Pi / 3},
+		{input: "rad 3 sqr atan", want: math.Pi / 3},
+		{input: "deg 1 180 * PI / atan", want: math.Pi / 4},
 
 		// Bitwise operations and base input modes.
 		{input: "0x00ff 0xff00 or", want: 0xffff},
@@ -82,9 +99,12 @@ func TestRPN(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Got error %q, want no error", err)
 			}
-			got := stack.top()
-			if got != tt.want {
-				t.Fatalf("diff: input: %q, want: %.8f, got: %.8f", tt.input, tt.want, got)
+			// Round to 6 decimals to make comparing floating point a bit easier.
+			got := fmt.Sprintf("%.6f", stack.top())
+			want := fmt.Sprintf("%.6f", tt.want)
+
+			if got != want {
+				t.Fatalf("diff: input: %q, want: %v, got: %v", tt.input, want, got)
 			}
 			continue
 		}
