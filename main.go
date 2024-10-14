@@ -101,6 +101,10 @@ func calc(stack *stackType, cmd string) error {
 				break
 			}
 		}
+		// Comment?
+		if strings.HasPrefix(line, "#") {
+			continue
+		}
 
 		line = strings.TrimSpace(line)
 		line = cleanRe.ReplaceAllString(line, "")
