@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.3.0 (Oct/2024)
+
+- NEW: Added comment support. Anything starting with '#' is a comment.
+- NEW: Added a demo GIF to the main github page.
+- NEW: The `help` command now prints the binary version as well.
+
 ## v0.2.0 (Oct/2024)
 
 - NEW: Added pagination to the help screen.
