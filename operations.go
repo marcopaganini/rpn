@@ -57,9 +57,14 @@ func newOpsType(stack *stackType) *opsType {
 		base:  10,
 		stack: stack,
 	}
+	build := Build
+	if build == "" {
+		build = "no version info"
+	}
+
 	ret.ops = []interface{}{
 		// Header
-		"BOLD:Online help for " + programTitle + ".",
+		"BOLD:Online help for " + programTitle + " (" + build + ").",
 		"BOLD:See http://github.com/marcopaganini/rpn for full details.",
 		"",
 		"BOLD:Data entry:",
