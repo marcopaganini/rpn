@@ -14,6 +14,8 @@ any Linux distribution.
 This is a work in progress, but `rpn` already supports a number of operations and
 should be useful for daily work.
 
+![Demo Video](assets/rpn.gif)
+
 ## Motivation
 
 I've been using RPN calculators for a long time and the lack of a simple and
