@@ -57,9 +57,11 @@ func newOpsType(stack *stackType) *opsType {
 		base:  10,
 		stack: stack,
 	}
-	build := Build
-	if build == "" {
+	var build string
+	if Build == "" {
 		build = "no version info"
+	} else {
+		build = "v" + Build
 	}
 
 	ret.ops = []interface{}{
