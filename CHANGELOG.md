@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.3.1 (Oct/2024)
+
+- BUGFIX: Introduced a small hack to properly pretty print large numbers.
+  Please note that rpn uses 64-bit floats internally, so numbers above 2^53
+  cannot be reliably represented with full precision.
+- BUGFIX: Small fix when printing the version number in the help page.
+
 ## v0.3.0 (Oct/2024)
 
 - NEW: Added comment support. Anything starting with '#' is a comment.
