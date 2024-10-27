@@ -7,9 +7,9 @@ package main
 import (
 	"errors"
 	"fmt"
-	"math"
 	"strings"
 
+	"github.com/ericlagergren/decimal"
 	"github.com/fatih/color"
 )
 
@@ -24,7 +24,7 @@ type (
 		// Function receives the entire inverted stack (x=0, y=1, etc) and
 		// returns the number of elements to be popped from the stack, and a
 		// list of elements to be added pushes to the stack.
-		fn func([]float64) ([]float64, int, error)
+		fn func([]*decimal.Big) ([]*decimal.Big, int, error)
 	}
 
 	// opsType contains the base information for a list of operations and
@@ -45,14 +45,25 @@ type (
 
 // radOrDeg converts the value passed to radians if degmode (degrees
 // mode) is set. Otherwise, it just returns the same value (radians).
-func radOrDeg(n float64, degmode bool) float64 {
+func radOrDeg(ctx decimal.Context, n *decimal.Big, degmode bool) *decimal.Big {
 	if degmode {
-		return n * math.Pi / 180
+		pi := ctx.Pi(big())
+		npi := big().Mul(n, pi)
+		return ctx.Quo(big(), npi, bigUint(180))
 	}
 	return n
 }
 
-func newOpsType(stack *stackType) *opsType {
+func bigToUint64(x *decimal.Big) uint64 {
+	// Calculate floor(x)
+	floor, ok := big().Set(x).Uint64()
+	if !ok {
+		fmt.Printf(warnMsg("Note: %f truncated to %d (uint64)\n"), x, floor)
+	}
+	return floor
+}
+
+func newOpsType(ctx decimal.Context, stack *stackType) *opsType {
 	ret := &opsType{
 		base:  10,
 		stack: stack,
@@ -63,6 +74,8 @@ func newOpsType(stack *stackType) *opsType {
 	} else {
 		build = "v" + Build
 	}
+
+	z := big()
 
 	ret.ops = []interface{}{
 		// Header
@@ -81,206 +94,259 @@ func newOpsType(stack *stackType) *opsType {
 		"BOLD:Operations:",
 		"",
 		"BOLD:Basic Operations",
-		ophandler{"+", "Add x to y", 2, func(a []float64) ([]float64, int, error) {
-			return []float64{a[1] + a[0]}, 2, nil
+		ophandler{"+", "Add x to y", 2, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
+			z.Add(a[0], a[1])
+			return []*decimal.Big{z}, 2, nil
 		}},
-		ophandler{"-", "Subtract x from y", 2, func(a []float64) ([]float64, int, error) {
-			return []float64{a[1] - a[0]}, 2, nil
+		ophandler{"-", "Subtract x from y", 2, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
+			z.Sub(a[1], a[0])
+			return []*decimal.Big{z}, 2, nil
 		}},
-		ophandler{"*", "Multiply x and y", 2, func(a []float64) ([]float64, int, error) {
-			return []float64{a[1] * a[0]}, 2, nil
+		ophandler{"*", "Multiply x and y", 2, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
+			z.Mul(a[0], a[1])
+			return []*decimal.Big{z}, 2, nil
 		}},
-		ophandler{"/", "Divide y by x", 2, func(a []float64) ([]float64, int, error) {
-			if a[0] == 0 {
+		ophandler{"/", "Divide y by x", 2, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
+			if a[0].Cmp(big()) == 0 {
 				return nil, 2, errors.New("can't divide by zero")
 			}
-			return []float64{a[1] / a[0]}, 2, nil
+			ctx.Quo(z, a[1], a[0])
+			return []*decimal.Big{z}, 2, nil
 		}},
-		ophandler{"chs", "Change signal of x", 1, func(a []float64) ([]float64, int, error) {
-			return []float64{a[0] * -1}, 1, nil
+		ophandler{"chs", "Change signal of x", 1, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
+			a[0].SetSignbit(!a[0].Signbit())
+			return []*decimal.Big{a[0]}, 1, nil
 		}},
-		ophandler{"inv", "Invert x (1/x)", 1, func(a []float64) ([]float64, int, error) {
-			return []float64{1 / a[0]}, 1, nil
-		}},
-		ophandler{"^", "Raise y to the power of x", 2, func(a []float64) ([]float64, int, error) {
-			return []float64{math.Pow(a[1], a[0])}, 2, nil
-		}},
-		ophandler{"mod", "Calculates y modulo x", 2, func(a []float64) ([]float64, int, error) {
-			return []float64{math.Mod(a[1], a[0])}, 2, nil
-		}},
-		ophandler{"sqr", "Calculate square root of x", 1, func(a []float64) ([]float64, int, error) {
-			return []float64{math.Sqrt(a[0])}, 1, nil
-		}},
-		ophandler{"cbr", "Calculate cubic root of x", 1, func(a []float64) ([]float64, int, error) {
-			return []float64{math.Cbrt(a[0])}, 1, nil
-		}},
-		ophandler{"%", "Calculate x% of y", 2, func(a []float64) ([]float64, int, error) {
-			return []float64{a[1] * a[0] / 100}, 2, nil
-		}},
-
-		ophandler{"sum", "Sum all elements in stack", 1, func(a []float64) ([]float64, int, error) {
-			var sum float64
-			for _, v := range a {
-				sum += v
+		ophandler{"inv", "Invert x (1/x)", 1, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
+			if a[0].Cmp(big()) == 0 {
+				return nil, 2, errors.New("can't divide by zero")
 			}
-			return []float64{sum}, len(a), nil
+			one := bigUint(1)
+			ctx.Quo(z, one, a[0])
+			return []*decimal.Big{z}, 1, nil
+		}},
+		ophandler{"^", "Raise y to the power of x", 2, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
+			ctx.Pow(z, a[1], a[0])
+			return []*decimal.Big{z}, 2, nil
+		}},
+		ophandler{"mod", "Calculates y modulo x", 2, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
+			ctx.Rem(z, a[1], a[0])
+			return []*decimal.Big{z}, 2, nil
+		}},
+		ophandler{"sqr", "Calculate square root of x", 1, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
+			ctx.Sqrt(z, a[0])
+			return []*decimal.Big{z}, 1, nil
+		}},
+		ophandler{"cbr", "Calculate cubic root of x", 1, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
+			p := big().Quo(bigFloat("1"), bigFloat("3"))
+			ctx.Pow(z, a[0], p)
+			return []*decimal.Big{z}, 1, nil
+		}},
+		ophandler{"%", "Calculate x% of y", 2, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
+			z.Mul(a[0], a[1])
+			ctx.Quo(z, z, bigUint(100))
+			return []*decimal.Big{z}, 1, nil
 		}},
 
-		ophandler{"fac", "Calculate factorial of x", 1, func(a []float64) ([]float64, int, error) {
-			x := uint64(a[0])
-			if x <= 0 {
+		ophandler{"sum", "Sum all elements in stack", 1, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
+			sum := big()
+			for _, v := range a {
+				sum.Add(sum, v)
+			}
+			return []*decimal.Big{sum}, len(a), nil
+		}},
+
+		// @@
+		ophandler{"fac", "Calculate factorial of x", 1, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
+			ctx.Floor(z, a[0])
+			if z.Sign() < 0 {
 				return nil, 1, errors.New("factorial requires a positive number")
 			}
-			fact := uint64(1)
-			for ix := uint64(1); ix <= x; ix++ {
-				fact *= ix
+			fact := bigUint(1)
+			for ix := bigUint(1); ix.Cmp(z) <= 0; ix.Add(ix, bigUint(1)) {
+				fact.Mul(fact, ix)
 			}
-			return []float64{float64(fact)}, 1, nil
+			return []*decimal.Big{fact}, 1, nil
 		}},
 		"",
 		"BOLD:Bitwise Operations",
-		ophandler{"and", "Logical AND between x and y", 2, func(a []float64) ([]float64, int, error) {
-			return []float64{float64(uint64(a[1]) & uint64(a[0]))}, 2, nil
+		ophandler{"and", "Logical AND between x and y", 2, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
+			x := bigToUint64(a[0])
+			y := bigToUint64(a[1])
+			z := x & y
+			return []*decimal.Big{bigUint(z)}, 2, nil
 		}},
-		ophandler{"or", "Logical OR between x and y", 2, func(a []float64) ([]float64, int, error) {
-			return []float64{float64(uint64(a[1]) | uint64(a[0]))}, 2, nil
+		ophandler{"or", "Logical OR between x and y", 2, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
+			x := bigToUint64(a[0])
+			y := bigToUint64(a[1])
+			z := x | y
+			return []*decimal.Big{bigUint(z)}, 2, nil
 		}},
-		ophandler{"xor", "Logical XOR between x and y", 2, func(a []float64) ([]float64, int, error) {
-			return []float64{float64(uint64(a[1]) ^ uint64(a[0]))}, 2, nil
+		ophandler{"xor", "Logical XOR between x and y", 2, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
+			x := bigToUint64(a[0])
+			y := bigToUint64(a[1])
+			z := y ^ x
+			return []*decimal.Big{bigUint(z)}, 2, nil
 		}},
-		ophandler{"lshift", "Shift y left x times", 2, func(a []float64) ([]float64, int, error) {
-			return []float64{float64(uint64(a[1]) << uint64(a[0]))}, 2, nil
+		ophandler{"lshift", "Shift y left x times", 2, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
+			x := bigToUint64(a[0])
+			y := bigToUint64(a[1])
+			z := y << x
+			return []*decimal.Big{bigUint(z)}, 2, nil
 		}},
-		ophandler{"rshift", "Shift y right x times", 2, func(a []float64) ([]float64, int, error) {
-			return []float64{float64(uint64(a[1]) >> uint64(a[0]))}, 2, nil
+		ophandler{"rshift", "Shift y right x times", 2, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
+			x := bigToUint64(a[0])
+			y := bigToUint64(a[1])
+			z := y >> x
+			return []*decimal.Big{bigUint(z)}, 2, nil
 		}},
 		"",
 		"BOLD:Trigonometric Operations",
-		ophandler{"sin", "Sine of x", 1, func(a []float64) ([]float64, int, error) {
-			return []float64{math.Sin(radOrDeg(a[0], ret.degmode))}, 1, nil
+		ophandler{"sin", "Sine of x", 1, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
+			z := big()
+			ctx.Sin(z, radOrDeg(ctx, a[0], ret.degmode))
+			return []*decimal.Big{z}, 1, nil
 		}},
-		ophandler{"cos", "Cosine of x", 1, func(a []float64) ([]float64, int, error) {
-			return []float64{math.Cos(radOrDeg(a[0], ret.degmode))}, 1, nil
+		ophandler{"cos", "Cosine of x", 1, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
+			z := big()
+			ctx.Cos(z, radOrDeg(ctx, a[0], ret.degmode))
+			return []*decimal.Big{z}, 1, nil
 		}},
-		ophandler{"tan", "Tangent of x", 1, func(a []float64) ([]float64, int, error) {
-			return []float64{math.Tan(radOrDeg(a[0], ret.degmode))}, 1, nil
+		ophandler{"tan", "Tangent of x", 1, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
+			z := big()
+			ctx.Tan(z, radOrDeg(ctx, a[0], ret.degmode))
+			return []*decimal.Big{z}, 1, nil
 		}},
-		ophandler{"asin", "Arcsine of x", 1, func(a []float64) ([]float64, int, error) {
-			return []float64{math.Asin(radOrDeg(a[0], ret.degmode))}, 1, nil
+		ophandler{"asin", "Arcsine of x", 1, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
+			z := big()
+			ctx.Asin(z, radOrDeg(ctx, a[0], ret.degmode))
+			return []*decimal.Big{z}, 1, nil
 		}},
-		ophandler{"acos", "Arccosine of x", 1, func(a []float64) ([]float64, int, error) {
-			return []float64{math.Acos(radOrDeg(a[0], ret.degmode))}, 1, nil
+		ophandler{"acos", "Arccosine of x", 1, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
+			z := big()
+			ctx.Acos(z, radOrDeg(ctx, a[0], ret.degmode))
+			return []*decimal.Big{z}, 1, nil
 		}},
-		ophandler{"atan", "Arctangent of x", 1, func(a []float64) ([]float64, int, error) {
-			return []float64{math.Atan(radOrDeg(a[0], ret.degmode))}, 1, nil
+		ophandler{"atan", "Arctangent of x", 1, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
+			z := big()
+			ctx.Atan(z, radOrDeg(ctx, a[0], ret.degmode))
+			return []*decimal.Big{z}, 1, nil
 		}},
 
 		"",
 		"BOLD:Miscellaneous Operations",
-		ophandler{"f2c", "Convert x in Fahrenheit to Celsius", 1, func(a []float64) ([]float64, int, error) {
-			return []float64{(a[0] - 32) * 5 / 9}, 1, nil
+		ophandler{"f2c", "Convert x in Fahrenheit to Celsius", 1, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
+			z := big()
+			z.Sub(a[0], bigUint(32))
+			z.Mul(z, bigUint(5))
+			z.Quo(z, bigUint(9))
+			return []*decimal.Big{z}, 1, nil
 		}},
-		ophandler{"c2f", "Convert x in Celsius to Fahrenheit", 1, func(a []float64) ([]float64, int, error) {
-			return []float64{a[0]*9/5 + 32}, 1, nil
+		ophandler{"c2f", "Convert x in Celsius to Fahrenheit", 1, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
+			z := big()
+			z.Mul(a[0], bigUint(9))
+			z.Quo(z, bigUint(5))
+			z.Add(z, bigUint(32))
+			return []*decimal.Big{z}, 1, nil
 		}},
 		"",
 		"BOLD:Stack Operations",
-		ophandler{"p", "Display stack", 0, func(_ []float64) ([]float64, int, error) {
-			stack.print(ret.base)
+		ophandler{"p", "Display stack", 0, func(_ []*decimal.Big) ([]*decimal.Big, int, error) {
+			stack.print(ctx, ret.base)
 			return nil, 0, nil
 		}},
-		ophandler{"c", "Clear stack", 0, func(_ []float64) ([]float64, int, error) {
+		ophandler{"c", "Clear stack", 0, func(_ []*decimal.Big) ([]*decimal.Big, int, error) {
 			stack.clear()
 			return nil, 0, nil
 		}},
-		ophandler{"=", "Print top of stack (x)", 0, func(_ []float64) ([]float64, int, error) {
-			stack.printTop(ret.base)
+		ophandler{"=", "Print top of stack (x)", 0, func(_ []*decimal.Big) ([]*decimal.Big, int, error) {
+			stack.printTop(ctx, ret.base)
 			return nil, 0, nil
 		}},
-		ophandler{"d", "Drop top of stack (x)", 1, func(_ []float64) ([]float64, int, error) {
+		ophandler{"d", "Drop top of stack (x)", 1, func(_ []*decimal.Big) ([]*decimal.Big, int, error) {
 			return nil, 1, nil
 		}},
-		ophandler{"x", "Exchange x and y", 2, func(a []float64) ([]float64, int, error) {
-			return []float64{a[0], a[1]}, 2, nil
+		ophandler{"x", "Exchange x and y", 2, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
+			return []*decimal.Big{a[0], a[1]}, 2, nil
 		}},
 
 		"",
 		"BOLD:Math and Physical constants",
-		ophandler{"PI", "The famous transcedental number", 0, func(_ []float64) ([]float64, int, error) {
-			return []float64{math.Pi}, 0, nil
+		ophandler{"PI", "The famous transcedental number", 0, func(_ []*decimal.Big) ([]*decimal.Big, int, error) {
+			return []*decimal.Big{ctx.Pi(big())}, 0, nil
 		}},
-		ophandler{"E", "Another famous transcedental number", 0, func(_ []float64) ([]float64, int, error) {
-			return []float64{math.E}, 0, nil
+		ophandler{"E", "Another famous transcedental number", 0, func(_ []*decimal.Big) ([]*decimal.Big, int, error) {
+			return []*decimal.Big{bigFloat("2.71828182845904523536028747135266249775724709369995957496696763")}, 0, nil
 		}},
-		ophandler{"C", "Speed of light in vacuum, in m/s", 0, func(_ []float64) ([]float64, int, error) {
-			return []float64{299792458}, 0, nil
+		ophandler{"C", "Speed of light in vacuum, in m/s", 0, func(_ []*decimal.Big) ([]*decimal.Big, int, error) {
+			return []*decimal.Big{bigFloat("299792458")}, 0, nil
 		}},
-		ophandler{"MOL", "Avogadro's number", 1, func(_ []float64) ([]float64, int, error) {
-			return []float64{6.02214154e23}, 0, nil
+		ophandler{"MOL", "Avogadro's number", 1, func(_ []*decimal.Big) ([]*decimal.Big, int, error) {
+			return []*decimal.Big{bigFloat("6.02214154e23")}, 0, nil
 		}},
 
 		"",
 		"BOLD:Computer constants",
-		ophandler{"KB", "Kilobyte", 0, func(_ []float64) ([]float64, int, error) {
-			return []float64{math.Pow(10, 3)}, 0, nil
+		ophandler{"KB", "Kilobyte", 0, func(_ []*decimal.Big) ([]*decimal.Big, int, error) {
+			return []*decimal.Big{ctx.Pow(big(), bigUint(10), bigUint(3))}, 0, nil
 		}},
-		ophandler{"MB", "Megabyte", 0, func(_ []float64) ([]float64, int, error) {
-			return []float64{math.Pow(10, 6)}, 0, nil
+		ophandler{"MB", "Megabyte", 0, func(_ []*decimal.Big) ([]*decimal.Big, int, error) {
+			return []*decimal.Big{ctx.Pow(big(), bigUint(10), bigUint(6))}, 0, nil
 		}},
-		ophandler{"GB", "Gigabyte", 0, func(_ []float64) ([]float64, int, error) {
-			return []float64{math.Pow(10, 9)}, 0, nil
+		ophandler{"GB", "Gigabyte", 0, func(_ []*decimal.Big) ([]*decimal.Big, int, error) {
+			return []*decimal.Big{ctx.Pow(big(), bigUint(10), bigUint(9))}, 0, nil
 		}},
-		ophandler{"MB", "Terabyte", 0, func(_ []float64) ([]float64, int, error) {
-			return []float64{math.Pow(10, 12)}, 0, nil
+		ophandler{"MB", "Terabyte", 0, func(_ []*decimal.Big) ([]*decimal.Big, int, error) {
+			return []*decimal.Big{ctx.Pow(big(), bigUint(10), bigUint(12))}, 0, nil
 		}},
-		ophandler{"KIB", "Kibibyte", 0, func(_ []float64) ([]float64, int, error) {
-			return []float64{math.Pow(2, 10)}, 0, nil
+		ophandler{"KIB", "Kibibyte", 0, func(_ []*decimal.Big) ([]*decimal.Big, int, error) {
+			return []*decimal.Big{ctx.Pow(big(), bigUint(2), bigUint(10))}, 0, nil
 		}},
-		ophandler{"MIB", "Mebibyte", 0, func(_ []float64) ([]float64, int, error) {
-			return []float64{math.Pow(2, 20)}, 0, nil
+		ophandler{"MIB", "Mebibyte", 0, func(_ []*decimal.Big) ([]*decimal.Big, int, error) {
+			return []*decimal.Big{ctx.Pow(big(), bigUint(2), bigUint(20))}, 0, nil
 		}},
-		ophandler{"GIB", "Gibibyte", 0, func(_ []float64) ([]float64, int, error) {
-			return []float64{math.Pow(2, 30)}, 0, nil
+		ophandler{"GIB", "Gibibyte", 0, func(_ []*decimal.Big) ([]*decimal.Big, int, error) {
+			return []*decimal.Big{ctx.Pow(big(), bigUint(2), bigUint(30))}, 0, nil
 		}},
-		ophandler{"TIB", "Tebibyte", 0, func(_ []float64) ([]float64, int, error) {
-			return []float64{math.Pow(2, 40)}, 0, nil
+		ophandler{"TIB", "Tebibyte", 0, func(_ []*decimal.Big) ([]*decimal.Big, int, error) {
+			return []*decimal.Big{ctx.Pow(big(), bigUint(2), bigUint(40))}, 0, nil
 		}},
 
 		"",
 		"BOLD:Program Control",
-		ophandler{"dec", "Output in decimal", 0, func(_ []float64) ([]float64, int, error) {
+		ophandler{"dec", "Output in decimal", 0, func(_ []*decimal.Big) ([]*decimal.Big, int, error) {
 			ret.base = 10
 			ret.degmode = false
 			return nil, 0, nil
 		}},
-		ophandler{"bin", "Output in binary", 0, func(_ []float64) ([]float64, int, error) {
+		ophandler{"bin", "Output in binary", 0, func(_ []*decimal.Big) ([]*decimal.Big, int, error) {
 			ret.base = 2
 			ret.degmode = false
 			return nil, 0, nil
 		}},
-		ophandler{"oct", "Output in octal", 0, func(_ []float64) ([]float64, int, error) {
+		ophandler{"oct", "Output in octal", 0, func(_ []*decimal.Big) ([]*decimal.Big, int, error) {
 			ret.base = 8
 			ret.degmode = false
 			return nil, 0, nil
 		}},
-		ophandler{"hex", "Output in hexadecimal", 0, func(_ []float64) ([]float64, int, error) {
+		ophandler{"hex", "Output in hexadecimal", 0, func(_ []*decimal.Big) ([]*decimal.Big, int, error) {
 			ret.base = 16
 			ret.degmode = false
 			return nil, 0, nil
 		}},
-		ophandler{"deg", "All angles in degrees", 0, func(_ []float64) ([]float64, int, error) {
+		ophandler{"deg", "All angles in degrees", 0, func(_ []*decimal.Big) ([]*decimal.Big, int, error) {
 			ret.base = 10
 			ret.degmode = true
 			return nil, 0, nil
 		}},
-		ophandler{"rad", "All angles in radians", 0, func(_ []float64) ([]float64, int, error) {
+		ophandler{"rad", "All angles in radians", 0, func(_ []*decimal.Big) ([]*decimal.Big, int, error) {
 			ret.base = 10
 			ret.degmode = false
 			return nil, 0, nil
 		}},
-		ophandler{"debug", "Toggle debugging", 0, func(_ []float64) ([]float64, int, error) {
+		ophandler{"debug", "Toggle debugging", 0, func(_ []*decimal.Big) ([]*decimal.Big, int, error) {
 			ret.debug = !ret.debug
-			fmt.Printf("Debugging state: %v\n", ret.debug)
+			fmt.Printf(warnMsg("Debugging state: %v\n"), ret.debug)
 			return nil, 0, nil
 		}},
 		"",
@@ -293,7 +359,7 @@ func newOpsType(stack *stackType) *opsType {
 
 // operation performs an operation on the stack and returns a slice of elements
 // added to the stack and the number of elements removed from the stack.
-func operation(handler ophandler, stack *stackType) ([]float64, int, error) {
+func operation(handler ophandler, stack *stackType) ([]*decimal.Big, int, error) {
 	// Make sure we have enough arguments in the list.
 	length := len(stack.list)
 	if length < handler.numArgs {
@@ -302,7 +368,7 @@ func operation(handler ophandler, stack *stackType) ([]float64, int, error) {
 
 	// args contains a copy of all elements in the stack reversed.  This makes
 	// it easier for functions to use x as a[0], y as a[1], etc.
-	args := []float64{}
+	args := []*decimal.Big{}
 	for ix := length - 1; ix >= 0; ix-- {
 		args = append(args, stack.list[ix])
 	}
@@ -348,8 +414,6 @@ func (x opsType) help() error {
 	if !pager.colorSupport {
 		color.NoColor = true
 	}
-	bold := color.New(color.Bold).SprintFunc()
-
 	for _, v := range x.ops {
 		// ophandler lines.
 		if handler, ok := v.(ophandler); ok {

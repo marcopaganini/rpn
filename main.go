@@ -5,6 +5,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -13,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/chzyer/readline"
+	"github.com/ericlagergren/decimal"
 	"github.com/fatih/color"
 )
 
@@ -20,12 +22,19 @@ var (
 	// Build is filled by go build -ldflags during build.
 	Build        string
 	programTitle = "rpn - a simple CLI RPN calculator"
+
+	// These are functions to be used to print in color.
+	errorMsg = color.New(color.FgRed).SprintFunc()
+	warnMsg  = color.New(color.FgMagenta).SprintFunc()
+	bold     = color.New(color.Bold).SprintFunc()
 )
 
-// atof takes a string as an argument and return a float64 representing that
-// string. Strings starting in 0x or 0X are treated as hex strings.  Strings
-// starting in o or 0 are treated as octal strings.
-func atof(s string) (float64, error) {
+// atof takes a string as an argument and return a decimal object representing
+// that string. Strings starting in 0x or 0X are treated as hex strings.
+// Strings starting in o or 0 are treated as octal strings. Non decimal strings
+// are converted to a uint64 intermediate representation and thus limited to
+// how much a uint64 can hold.
+func atof(s string) (*decimal.Big, error) {
 	base := 10
 	switch {
 	case (strings.HasPrefix(s, "0b") || strings.HasPrefix(s, "0B")) && len(s) > 2:
@@ -42,10 +51,19 @@ func atof(s string) (float64, error) {
 	}
 
 	if base == 10 {
-		return strconv.ParseFloat(s, 64)
+		var d decimal.Big
+		if _, ok := d.SetString(s); !ok || d.IsNaN(0) {
+			return nil, errors.New("unable to convert number")
+		}
+		return &d, nil
 	}
+
+	// Non-base 10 numbers are limited to uint64 sizes.
 	ret, err := strconv.ParseUint(s, base, 64)
-	return float64(ret), err
+	if err != nil {
+		return nil, err
+	}
+	return bigUint(ret), nil
 }
 
 // calc contains the bulk of the calculator code. It takes a stack and an
@@ -60,14 +78,13 @@ func calc(stack *stackType, cmd string) error {
 		rl   *readline.Instance
 	)
 
+	ctx := decimal.Context128
+
 	// Single command execution?
 	single := (cmd != "")
 
-	// Colors
-	red := color.New(color.FgRed).SprintFunc()
-
 	// Operations
-	ops := newOpsType(stack)
+	ops := newOpsType(ctx, stack)
 	opmap := ops.opmap()
 
 	if !single {
@@ -90,7 +107,7 @@ func calc(stack *stackType, cmd string) error {
 		stack.save()
 
 		if ops.debug {
-			stack.print(ops.base)
+			stack.print(ctx, ops.base)
 		}
 
 		// By default, use the passed command. If no command, initialize readline.
@@ -120,7 +137,7 @@ func calc(stack *stackType, cmd string) error {
 					if single {
 						return err
 					}
-					fmt.Printf(red("ERROR: %v\n"), err)
+					fmt.Printf(errorMsg("ERROR: %v\n"), err)
 					stack.restore()
 					break
 				}
@@ -150,7 +167,7 @@ func calc(stack *stackType, cmd string) error {
 			// Help
 			if token == "help" || token == "h" || token == "?" {
 				if err := ops.help(); err != nil {
-					fmt.Println(red(err))
+					fmt.Println(errorMsg(err))
 				}
 				continue
 			}
@@ -164,8 +181,8 @@ func calc(stack *stackType, cmd string) error {
 			// If anything fails, restore stack and stop token processing.
 			n, err := atof(token)
 			if err != nil {
-				fmt.Printf(red("Not a number or operator: %q.\n"), token)
-				fmt.Println(red("Use \"help\" for online help."))
+				fmt.Printf(errorMsg("Not a number or operator: %q.\n"), token)
+				fmt.Println(errorMsg("Use \"help\" for online help."))
 				stack.restore()
 				break
 			}
@@ -178,7 +195,7 @@ func calc(stack *stackType, cmd string) error {
 			if single {
 				fmt.Println(stack.top()) // plain print to stdout
 			} else {
-				stack.printTop(ops.base) // pretty print to terminal
+				stack.printTop(ctx, ops.base) // pretty print to terminal
 			}
 		}
 
