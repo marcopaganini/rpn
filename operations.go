@@ -75,8 +75,6 @@ func newOpsType(ctx decimal.Context, stack *stackType) *opsType {
 		build = "v" + Build
 	}
 
-	z := big()
-
 	ret.ops = []interface{}{
 		// Header
 		"BOLD:Online help for " + programTitle + " (" + build + ").",
@@ -95,55 +93,38 @@ func newOpsType(ctx decimal.Context, stack *stackType) *opsType {
 		"",
 		"BOLD:Basic Operations",
 		ophandler{"+", "Add x to y", 2, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
-			z.Add(a[0], a[1])
-			return []*decimal.Big{z}, 2, nil
+			return []*decimal.Big{big().Add(a[0], a[1])}, 2, nil
 		}},
 		ophandler{"-", "Subtract x from y", 2, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
-			z.Sub(a[1], a[0])
-			return []*decimal.Big{z}, 2, nil
+			return []*decimal.Big{big().Sub(a[1], a[0])}, 2, nil
 		}},
 		ophandler{"*", "Multiply x and y", 2, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
-			z.Mul(a[0], a[1])
-			return []*decimal.Big{z}, 2, nil
+			return []*decimal.Big{big().Mul(a[0], a[1])}, 2, nil
 		}},
 		ophandler{"/", "Divide y by x", 2, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
-			if a[0].Cmp(big()) == 0 {
-				return nil, 2, errors.New("can't divide by zero")
-			}
-			ctx.Quo(z, a[1], a[0])
-			return []*decimal.Big{z}, 2, nil
+			return []*decimal.Big{ctx.Quo(big(), a[1], a[0])}, 2, nil
 		}},
 		ophandler{"chs", "Change signal of x", 1, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
-			a[0].SetSignbit(!a[0].Signbit())
-			return []*decimal.Big{a[0]}, 1, nil
+			return []*decimal.Big{a[0].Neg(a[0])}, 1, nil
 		}},
 		ophandler{"inv", "Invert x (1/x)", 1, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
-			if a[0].Cmp(big()) == 0 {
-				return nil, 2, errors.New("can't divide by zero")
-			}
-			one := bigUint(1)
-			ctx.Quo(z, one, a[0])
-			return []*decimal.Big{z}, 1, nil
+			return []*decimal.Big{ctx.Quo(big(), bigUint(1), a[0])}, 1, nil
 		}},
 		ophandler{"^", "Raise y to the power of x", 2, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
-			ctx.Pow(z, a[1], a[0])
-			return []*decimal.Big{z}, 2, nil
+			return []*decimal.Big{ctx.Pow(big(), a[1], a[0])}, 2, nil
 		}},
 		ophandler{"mod", "Calculates y modulo x", 2, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
-			ctx.Rem(z, a[1], a[0])
-			return []*decimal.Big{z}, 2, nil
+			return []*decimal.Big{ctx.Rem(big(), a[1], a[0])}, 2, nil
 		}},
 		ophandler{"sqr", "Calculate square root of x", 1, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
-			ctx.Sqrt(z, a[0])
-			return []*decimal.Big{z}, 1, nil
+			return []*decimal.Big{ctx.Sqrt(big(), a[0])}, 1, nil
 		}},
 		ophandler{"cbr", "Calculate cubic root of x", 1, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
-			p := big().Quo(bigFloat("1"), bigFloat("3"))
-			ctx.Pow(z, a[0], p)
-			return []*decimal.Big{z}, 1, nil
+			e := big().Quo(bigFloat("1"), bigFloat("3"))
+			return []*decimal.Big{ctx.Pow(big(), a[0], e)}, 1, nil
 		}},
 		ophandler{"%", "Calculate x% of y", 2, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
-			z.Mul(a[0], a[1])
+			z := big().Mul(a[0], a[1])
 			ctx.Quo(z, z, bigUint(100))
 			return []*decimal.Big{z}, 1, nil
 		}},
@@ -158,7 +139,7 @@ func newOpsType(ctx decimal.Context, stack *stackType) *opsType {
 
 		// @@
 		ophandler{"fac", "Calculate factorial of x", 1, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
-			ctx.Floor(z, a[0])
+			z := ctx.Floor(big(), a[0])
 			if z.Sign() < 0 {
 				return nil, 1, errors.New("factorial requires a positive number")
 			}
@@ -203,33 +184,27 @@ func newOpsType(ctx decimal.Context, stack *stackType) *opsType {
 		"",
 		"BOLD:Trigonometric Operations",
 		ophandler{"sin", "Sine of x", 1, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
-			z := big()
-			ctx.Sin(z, radOrDeg(ctx, a[0], ret.degmode))
+			z := ctx.Sin(big(), radOrDeg(ctx, a[0], ret.degmode))
 			return []*decimal.Big{z}, 1, nil
 		}},
 		ophandler{"cos", "Cosine of x", 1, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
-			z := big()
-			ctx.Cos(z, radOrDeg(ctx, a[0], ret.degmode))
+			z := ctx.Cos(big(), radOrDeg(ctx, a[0], ret.degmode))
 			return []*decimal.Big{z}, 1, nil
 		}},
 		ophandler{"tan", "Tangent of x", 1, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
-			z := big()
-			ctx.Tan(z, radOrDeg(ctx, a[0], ret.degmode))
+			z := ctx.Tan(big(), radOrDeg(ctx, a[0], ret.degmode))
 			return []*decimal.Big{z}, 1, nil
 		}},
 		ophandler{"asin", "Arcsine of x", 1, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
-			z := big()
-			ctx.Asin(z, radOrDeg(ctx, a[0], ret.degmode))
+			z := ctx.Asin(big(), radOrDeg(ctx, a[0], ret.degmode))
 			return []*decimal.Big{z}, 1, nil
 		}},
 		ophandler{"acos", "Arccosine of x", 1, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
-			z := big()
-			ctx.Acos(z, radOrDeg(ctx, a[0], ret.degmode))
+			z := ctx.Acos(big(), radOrDeg(ctx, a[0], ret.degmode))
 			return []*decimal.Big{z}, 1, nil
 		}},
 		ophandler{"atan", "Arctangent of x", 1, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
-			z := big()
-			ctx.Atan(z, radOrDeg(ctx, a[0], ret.degmode))
+			z := ctx.Atan(big(), radOrDeg(ctx, a[0], ret.degmode))
 			return []*decimal.Big{z}, 1, nil
 		}},
 

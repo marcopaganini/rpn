@@ -143,6 +143,10 @@ func TestFormatNumber(t *testing.T) {
 		{10, bigFloat("10000.3333333333"), "10000.3333333333 (10,000.3333333333)"},
 		{10, bigFloat("-10000.3333333333"), "-10000.3333333333 (-10,000.3333333333)"},
 		{10, ctx.Pow(big(), bigUint(2), bigUint(64)), "18446744073709551616 (18,446,744,073,709,551,616)"},
+		{10, ctx.Pow(big(), bigUint(2), bigUint(1234567890)), "Infinity"},
+		{10, ctx.Quo(big(), bigUint(0), bigUint(0)), "NaN"},
+		{10, ctx.Quo(big(), bigUint(1), bigUint(0)), "Infinity"},
+		{10, ctx.Quo(big(), bigFloat("-1"), bigUint(0)), "-Infinity"},
 
 		// Binary
 		{2, bigUint(0b11111111), "0b11111111"},

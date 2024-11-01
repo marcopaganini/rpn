@@ -83,14 +83,23 @@ func stripTrailingDigits(s string, digits int) string {
 // formatNumber formats the number using base. For bases different than 10,
 // non-integer floating numbers are truncated.
 func formatNumber(ctx decimal.Context, n *decimal.Big, base int) string {
-	// Indicate possible truncation
-	suffix := ""
+	// Print NaN without suffix numbers.
+	if n.IsNaN(0) {
+		return strings.TrimRight(fmt.Sprint(n), "0123456789")
+	}
+	if n.IsInf(0) {
+		return fmt.Sprint(n)
+	}
+
 	// clean = double as ascii, without non-significant decimal zeroes.
 	clean := fmt.Sprintf("%f", n)
 
-	buf := &bytes.Buffer{}
-	var n64 uint64
+	var (
+		n64    uint64
+		suffix string
+	)
 
+	buf := &bytes.Buffer{}
 	if base != 10 {
 		// For negative numbers, prefix them with a minus sign and
 		// force them to be positive.
