@@ -128,7 +128,7 @@ func formatNumber(ctx decimal.Context, n *decimal.Big, base int) string {
 	case base == 16:
 		buf.WriteString(fmt.Sprintf("0x%x%s", n64, suffix))
 	default:
-		h := commafWithDigits(n, 16) // FIXME find out how to deal with precision properly.
+		h := commafWithDigits(n, n.Precision()) // FIXME find out how to deal with precision properly.
 		// Only print humanized format when it differs from original value.
 		if h != clean {
 			suffix = " (" + h + ")"
