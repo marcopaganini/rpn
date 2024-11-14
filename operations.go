@@ -321,7 +321,7 @@ func newOpsType(ctx decimal.Context, stack *stackType) *opsType {
 		}},
 		ophandler{"fmt", "Change output to X decimals", 0, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
 			x, ok := a[0].Uint64()
-			if !ok {
+			if !ok || !a[0].IsInt() {
 				return nil, 1, errors.New("precision must be a positive integer")
 			}
 			ret.decimals = int(x)
