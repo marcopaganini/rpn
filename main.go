@@ -114,7 +114,7 @@ func calc(stack *stackType, cmd string) error {
 		stack.save()
 
 		if ops.debug {
-			stack.print(ctx, ops.base)
+			stack.print(ctx, ops.base, ops.decimals)
 		}
 
 		// By default, use the passed command. If no command, initialize readline.
@@ -202,7 +202,7 @@ func calc(stack *stackType, cmd string) error {
 			if single {
 				fmt.Println(stack.top()) // plain print to stdout
 			} else {
-				stack.printTop(ctx, ops.base) // pretty print to terminal
+				stack.printTop(ctx, ops.base, ops.decimals) // pretty print to terminal
 			}
 		}
 

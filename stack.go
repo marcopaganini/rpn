@@ -50,12 +50,12 @@ func (x *stackType) top() *decimal.Big {
 }
 
 // printTop displays the top of the stack using the base indicated.
-func (x *stackType) printTop(ctx decimal.Context, base int) {
-	color.Cyan("= %s", formatNumber(ctx, x.top(), base))
+func (x *stackType) printTop(ctx decimal.Context, base, decimals int) {
+	color.Cyan("= %s", formatNumber(ctx, x.top(), base, decimals))
 }
 
 // print displays the contents of the stack using the base indicated.
-func (x *stackType) print(ctx decimal.Context, base int) {
+func (x *stackType) print(ctx decimal.Context, base, decimals int) {
 	last := len(x.list) - 1
 
 	fmt.Println(bold("===== Stack ====="))
@@ -67,6 +67,6 @@ func (x *stackType) print(ctx decimal.Context, base int) {
 		case last - 1:
 			tag = " y"
 		}
-		fmt.Printf("%s: %s\n", tag, formatNumber(ctx, x.list[ix], base))
+		fmt.Printf("%s: %s\n", tag, formatNumber(ctx, x.list[ix], base, decimals))
 	}
 }

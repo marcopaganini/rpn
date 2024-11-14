@@ -31,11 +31,12 @@ type (
 	// their descriptions. The operations go in a list of interfaces so
 	// we can also use strings and print them in the help() function.
 	opsType struct {
-		base    int           // Base for printing (default = 10)
-		debug   bool          // Debug state
-		degmode bool          // Degrees mode (default = Radians)
-		stack   *stackType    // stack object to use
-		ops     []interface{} // list of ophandlers & descriptions
+		base     int           // Base for printing (default = 10)
+		debug    bool          // Debug state
+		decimals int           // How many decimals to use when printing
+		degmode  bool          // Degrees mode (default = Radians)
+		stack    *stackType    // stack object to use
+		ops      []interface{} // list of ophandlers & descriptions
 	}
 
 	// opmapType is a handler to operation map, used to find the right
@@ -65,8 +66,9 @@ func bigToUint64(x *decimal.Big) uint64 {
 
 func newOpsType(ctx decimal.Context, stack *stackType) *opsType {
 	ret := &opsType{
-		base:  10,
-		stack: stack,
+		base:     10,
+		decimals: 6,
+		stack:    stack,
 	}
 	var build string
 	if Build == "" {
@@ -128,7 +130,6 @@ func newOpsType(ctx decimal.Context, stack *stackType) *opsType {
 			ctx.Quo(z, z, bigUint(100))
 			return []*decimal.Big{z}, 1, nil
 		}},
-
 		ophandler{"sum", "Sum all elements in stack", 1, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
 			sum := big()
 			for _, v := range a {
@@ -136,8 +137,6 @@ func newOpsType(ctx decimal.Context, stack *stackType) *opsType {
 			}
 			return []*decimal.Big{sum}, len(a), nil
 		}},
-
-		// @@
 		ophandler{"fac", "Calculate factorial of x", 1, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
 			z := ctx.Floor(big(), a[0])
 			if z.Sign() < 0 {
@@ -224,10 +223,11 @@ func newOpsType(ctx decimal.Context, stack *stackType) *opsType {
 			z.Add(z, bigUint(32))
 			return []*decimal.Big{z}, 1, nil
 		}},
+
 		"",
 		"BOLD:Stack Operations",
 		ophandler{"p", "Display stack", 0, func(_ []*decimal.Big) ([]*decimal.Big, int, error) {
-			stack.print(ctx, ret.base)
+			stack.print(ctx, ret.base, ret.decimals)
 			return nil, 0, nil
 		}},
 		ophandler{"c", "Clear stack", 0, func(_ []*decimal.Big) ([]*decimal.Big, int, error) {
@@ -235,7 +235,7 @@ func newOpsType(ctx decimal.Context, stack *stackType) *opsType {
 			return nil, 0, nil
 		}},
 		ophandler{"=", "Print top of stack (x)", 0, func(_ []*decimal.Big) ([]*decimal.Big, int, error) {
-			stack.printTop(ctx, ret.base)
+			stack.printTop(ctx, ret.base, ret.decimals)
 			return nil, 0, nil
 		}},
 		ophandler{"d", "Drop top of stack (x)", 1, func(_ []*decimal.Big) ([]*decimal.Big, int, error) {
@@ -318,6 +318,14 @@ func newOpsType(ctx decimal.Context, stack *stackType) *opsType {
 			ret.base = 10
 			ret.degmode = false
 			return nil, 0, nil
+		}},
+		ophandler{"fmt", "Change output to X decimals", 0, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
+			x, ok := a[0].Uint64()
+			if !ok {
+				return nil, 1, errors.New("precision must be a positive integer")
+			}
+			ret.decimals = int(x)
+			return nil, 1, nil
 		}},
 		ophandler{"debug", "Toggle debugging", 0, func(_ []*decimal.Big) ([]*decimal.Big, int, error) {
 			ret.debug = !ret.debug

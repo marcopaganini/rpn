@@ -213,8 +213,8 @@ func TestFormatNumber(t *testing.T) {
 		{10, bigUint(1000), "1000 (1,000)"},
 		{10, bigUint(1000000), "1000000 (1,000,000)"},
 		{10, bigUint(1000000000000000), "1000000000000000 (1,000,000,000,000,000)"},
-		{10, bigFloat("10000.3333333333"), "10000.3333333333 (10,000.3333333333)"},
-		{10, bigFloat("-10000.3333333333"), "-10000.3333333333 (-10,000.3333333333)"},
+		{10, bigFloat("10000.333333"), "10000.333333 (10,000.333333)"},
+		{10, bigFloat("-10000.333333"), "-10000.333333 (-10,000.333333)"},
 		{10, ctx.Pow(big(), bigUint(2), bigUint(64)), "18446744073709551616 (18,446,744,073,709,551,616)"},
 		{10, ctx.Pow(big(), bigUint(2), bigUint(1234567890)), "Infinity"},
 		{10, ctx.Quo(big(), bigUint(0), bigUint(0)), "NaN"},
@@ -236,7 +236,7 @@ func TestFormatNumber(t *testing.T) {
 		{16, big().Add(bigUint(0xff), bigFloat("0.5")).SetSignbit(true), "-0xff (truncated from -255.5)"},
 	}
 	for _, tt := range casetests {
-		got := formatNumber(ctx, tt.input, tt.base)
+		got := formatNumber(ctx, tt.input, tt.base, 6)
 		if got != tt.want {
 			t.Fatalf("diff: base: %d, input: %v, want: %q, got: %q", tt.base, tt.input, tt.want, got)
 		}

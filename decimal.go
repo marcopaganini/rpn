@@ -32,9 +32,8 @@ func bigFloat(s string) *decimal.Big {
 	return r
 }
 
-// commafWithDigits comes straight from humanize, but modified to call
-// strconv.Formatfloat with 0 as the precision. This will print the entire
-// number, and not truncate to the exact precision.
+// commafWithDigits idea comes from the humanize library, but was modified to
+// work with decimal numbers.
 func commafWithDigits(v *decimal.Big, decimals int) string {
 	buf := &bytes.Buffer{}
 	if v.Sign() < 0 {
@@ -67,6 +66,13 @@ func commafWithDigits(v *decimal.Big, decimals int) string {
 }
 
 func stripTrailingDigits(s string, digits int) string {
+	// Remove insignificant zeroes after period (if any).
+	if strings.Contains(s, ".") {
+		s = strings.TrimRight(s, "0")
+		s = strings.TrimRight(s, ".")
+	}
+
+	// Trim string to .<digits>
 	if i := strings.Index(s, "."); i >= 0 {
 		if digits <= 0 {
 			return s[:i]
@@ -80,9 +86,9 @@ func stripTrailingDigits(s string, digits int) string {
 	return s
 }
 
-// formatNumber formats the number using base. For bases different than 10,
-// non-integer floating numbers are truncated.
-func formatNumber(ctx decimal.Context, n *decimal.Big, base int) string {
+// formatNumber formats the number using base and decimals. For bases different
+// than 10, non-integer floating numbers are truncated.
+func formatNumber(ctx decimal.Context, n *decimal.Big, base, decimals int) string {
 	// Print NaN without suffix numbers.
 	if n.IsNaN(0) {
 		return strings.TrimRight(fmt.Sprint(n), "0123456789")
@@ -92,7 +98,8 @@ func formatNumber(ctx decimal.Context, n *decimal.Big, base int) string {
 	}
 
 	// clean = double as ascii, without non-significant decimal zeroes.
-	clean := fmt.Sprintf("%f", n)
+	fm := fmt.Sprintf("%%.%df", decimals)
+	clean := stripTrailingDigits(fmt.Sprintf(fm, n), decimals)
 
 	var (
 		n64    uint64
@@ -128,7 +135,7 @@ func formatNumber(ctx decimal.Context, n *decimal.Big, base int) string {
 	case base == 16:
 		buf.WriteString(fmt.Sprintf("0x%x%s", n64, suffix))
 	default:
-		h := commafWithDigits(n, n.Precision()) // FIXME find out how to deal with precision properly.
+		h := commafWithDigits(n, decimals) // FIXME find out how to deal with precision properly.
 		// Only print humanized format when it differs from original value.
 		if h != clean {
 			suffix = " (" + h + ")"
