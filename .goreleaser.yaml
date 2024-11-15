@@ -69,3 +69,16 @@ changelog:
     exclude:
       - "^docs:"
       - "^test:"
+
+brews:
+  - name: rpn
+    repository:
+      owner: marcopaganini
+      name: homebrew-tap
+      branch: master
+    directory: Formula
+    homepage: https://github.com/marcopaganini/rpn
+    description: A Linux CLI RPN calculator
+    license: "MIT"
+    install: |
+      bin.install "rpn"
