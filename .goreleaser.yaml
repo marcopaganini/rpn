@@ -76,6 +76,7 @@ brews:
       owner: marcopaganini
       name: homebrew-tap
       branch: master
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
     directory: Formula
     homepage: https://github.com/marcopaganini/rpn
     description: A Linux CLI RPN calculator
