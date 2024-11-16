@@ -12,23 +12,20 @@ import (
 	"github.com/ericlagergren/decimal"
 )
 
-// This matches the precision in decimal.Context128
-const precision = 34
-
 // big returns a new *decimal.Big
 func big() *decimal.Big {
-	return decimal.WithPrecision(precision)
+	return decimal.WithContext(decimal.Context128)
 }
 
 // bigUint returns a new *decimal.Big from an uint64.
 func bigUint(n uint64) *decimal.Big {
-	return decimal.WithPrecision(precision).SetUint64(n)
+	return big().SetUint64(n)
 }
 
 // bigFloat returns a new *decimal.Big from a string
 // Using a float64 here will introduce rounding errors.
 func bigFloat(s string) *decimal.Big {
-	r, _ := decimal.WithPrecision(precision).SetString(s)
+	r, _ := big().SetString(s)
 	return r
 }
 

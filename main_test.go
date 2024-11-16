@@ -118,6 +118,7 @@ func TestRPN(t *testing.T) {
 				"687930203068055400275795180972382856696655279408212344832"), precision: 6144},
 		{input: "10 6144 ^", want: bigFloat("1" + strings.Repeat("0", 6144)), precision: 6144},
 		{input: "10 6145 ^", want: bigFloat("+Infinity")},
+		{input: "10 34 ^ 1 -", want: bigFloat("9999999999999999999999999999999999")},
 		{input: "c", want: bigUint(0)},
 		// Invalid operator should not cause changes to stack.
 		{input: "foobar", want: bigUint(0)},

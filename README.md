@@ -99,6 +99,7 @@ limitations:
 * RPN uses [General Decimal Arithmetic](https://speleotrove.com/decimal/).
 * Internally, we use the IEEE 754R Decimal128 format, with a precision a maximum
   scale of `10^6144`.
+* Maximum precision is 34 digits.
 * When operating on non-decimal numbers, input is truncated to a `uint64`
   (maximum = `2^64`).
 * We currently trim trailing fractional zeroes. This means that, for example,
