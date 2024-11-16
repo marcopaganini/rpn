@@ -168,6 +168,8 @@ func TestRPN(t *testing.T) {
 		{input: "-10 c2f", want: bigUint(14)},
 		{input: "0 c2f", want: bigUint(32)},
 		{input: "c", want: bigUint(0)},
+		{input: "1 dup dup sum", want: bigUint(3)},
+		{input: "c", want: bigUint(0)},
 	}
 
 	stack := &stackType{}

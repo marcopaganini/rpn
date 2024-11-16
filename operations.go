@@ -241,6 +241,10 @@ func newOpsType(ctx decimal.Context, stack *stackType) *opsType {
 		ophandler{"d", "Drop top of stack (x)", 1, func(_ []*decimal.Big) ([]*decimal.Big, int, error) {
 			return nil, 1, nil
 		}},
+		ophandler{"dup", "Duplicate top of stack", 1, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
+			stack.push(a[0])
+			return nil, 0, nil
+		}},
 		ophandler{"x", "Exchange x and y", 2, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
 			return []*decimal.Big{a[0], a[1]}, 2, nil
 		}},
