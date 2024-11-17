@@ -255,7 +255,7 @@ func newOpsType(ctx decimal.Context, stack *stackType) *opsType {
 			return []*decimal.Big{ctx.Pi(big())}, 0, nil
 		}},
 		ophandler{"E", "Another famous transcedental number", 0, func(_ []*decimal.Big) ([]*decimal.Big, int, error) {
-			return []*decimal.Big{bigFloat("2.71828182845904523536028747135266249775724709369995957496696763")}, 0, nil
+			return []*decimal.Big{ctx.E(big())}, 0, nil
 		}},
 		ophandler{"C", "Speed of light in vacuum, in m/s", 0, func(_ []*decimal.Big) ([]*decimal.Big, int, error) {
 			return []*decimal.Big{bigFloat("299792458")}, 0, nil
