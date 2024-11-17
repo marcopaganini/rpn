@@ -260,7 +260,7 @@ func newOpsType(ctx decimal.Context, stack *stackType) *opsType {
 		ophandler{"C", "Speed of light in vacuum, in m/s", 0, func(_ []*decimal.Big) ([]*decimal.Big, int, error) {
 			return []*decimal.Big{bigFloat("299792458")}, 0, nil
 		}},
-		ophandler{"MOL", "Avogadro's number", 1, func(_ []*decimal.Big) ([]*decimal.Big, int, error) {
+		ophandler{"MOL", "Avogadro's number", 0, func(_ []*decimal.Big) ([]*decimal.Big, int, error) {
 			return []*decimal.Big{bigFloat("6.02214154e23")}, 0, nil
 		}},
 
