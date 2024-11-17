@@ -41,7 +41,8 @@ func commafWithDigits(v *decimal.Big, decimals int) string {
 
 	comma := []byte{','}
 
-	parts := strings.Split(fmt.Sprintf("%f", v), ".")
+	f := fmt.Sprintf("%%.%df", decimals)
+	parts := strings.Split(fmt.Sprintf(f, v), ".")
 
 	pos := 0
 	if len(parts[0])%3 != 0 {
@@ -95,8 +96,8 @@ func formatNumber(ctx decimal.Context, n *decimal.Big, base, decimals int) strin
 	}
 
 	// clean = double as ascii, without non-significant decimal zeroes.
-	fm := fmt.Sprintf("%%.%df", decimals)
-	clean := stripTrailingDigits(fmt.Sprintf(fm, n), decimals)
+	f := fmt.Sprintf("%%.%df", decimals)
+	clean := stripTrailingDigits(fmt.Sprintf(f, n), decimals)
 
 	var (
 		n64    uint64
@@ -132,7 +133,7 @@ func formatNumber(ctx decimal.Context, n *decimal.Big, base, decimals int) strin
 	case base == 16:
 		buf.WriteString(fmt.Sprintf("0x%x%s", n64, suffix))
 	default:
-		h := commafWithDigits(n, decimals) // FIXME find out how to deal with precision properly.
+		h := commafWithDigits(n, decimals)
 		// Only print humanized format when it differs from original value.
 		if h != clean {
 			suffix = " (" + h + ")"
