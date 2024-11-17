@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.0.0 (Nov/2024)
+
+- NEW: Big change! RPN now uses decimal math. Previously, RPN used plain
+  float64s for calculations. With this version, we move to decimal math, which
+  is more precise and supports larger numbers. Maximum precision is 34 digits,
+  and maximum representable number is 10^6144. Please note that non-decimal
+  numbers are limited to the maximum a uint64 can represent (2^64).
+- NEW: Added the "fmt" operator to set the output to a number of decimals
+  (E.g.: 3 fmt will set the output formatting to 3 decimals.)
+- NEW: Another new operator, "dup", duplicates the top of the stack.
+- NEW: Now available on homebrew for installation! Look at the [README.md] file
+  for instructions.
+
 ## v0.3.1 (Oct/2024)
 
 - BUGFIX: Introduced a small hack to properly pretty print large numbers.
