@@ -36,10 +36,6 @@ archives:
       - goos: windows
         format: zip
 
-upx:
-  - enabled: true
-    compress: best
-
 nfpms:
   - package_name: rpn
     homepage: https://github.com/marcopaganini/rpn
