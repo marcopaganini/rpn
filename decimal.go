@@ -31,7 +31,10 @@ func bigFloat(s string) *decimal.Big {
 
 // commafWithDigits idea comes from the humanize library, but was modified to
 // work with decimal numbers.
-func commafWithDigits(v *decimal.Big, decimals int) string {
+func commafWithDigits(n *decimal.Big, decimals int) string {
+	// Make a copy so we won't modify the original value (passed by pointer).
+	v := big().Copy(n)
+
 	buf := &bytes.Buffer{}
 	if v.Sign() < 0 {
 		buf.Write([]byte{'-'})
