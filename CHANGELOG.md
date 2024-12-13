@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.0.1 (Dec/2024)
+
+- NEW: Limit precision back to 128 digits. The previous attempt to use 6144
+  bits caused all sorts of problems with the decimal library, including some
+  serious rounding issues.
+- NEW: Add exp/log/ln operations (thanks https://github.com/kpbuk)
+- BUGFIX: Fix precision bug on formatted numbers.
+- BUGFIX: The MOL constant required a bogus argument to work.
+- BUGFIX: Removed upx (binary compression) from goreleaser. This breaks Mac
+  binaries.
+- BUGFIX: Make sure the original value is not changed when formatting numbers.
+  This caused a latent bug under some specific conditions.
+
 ## v1.0.0 (Nov/2024)
 
 - NEW: Big change! RPN now uses decimal math. Previously, RPN used plain
