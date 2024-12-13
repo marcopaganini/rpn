@@ -181,7 +181,7 @@ func newOpsType(ctx decimal.Context, stack *stackType) *opsType {
 			return []*decimal.Big{bigUint(z)}, 2, nil
 		}},
 		"",
-		"BOLD:Trigonometric Operations",
+		"BOLD:Trigonometric and Log Operations",
 		ophandler{"sin", "Sine of x", 1, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
 			z := ctx.Sin(big(), radOrDeg(ctx, a[0], ret.degmode))
 			return []*decimal.Big{z}, 1, nil
@@ -204,6 +204,18 @@ func newOpsType(ctx decimal.Context, stack *stackType) *opsType {
 		}},
 		ophandler{"atan", "Arctangent of x", 1, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
 			z := ctx.Atan(big(), radOrDeg(ctx, a[0], ret.degmode))
+			return []*decimal.Big{z}, 1, nil
+		}},
+		ophandler{"exp", "Calculate e ^ x", 1, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
+			z := ctx.Exp(big(), a[0])
+			return []*decimal.Big{z}, 1, nil
+		}},
+		ophandler{"ln", "Natural logarithm of x", 1, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
+			z := ctx.Log(big(), a[0])
+			return []*decimal.Big{z}, 1, nil
+		}},
+		ophandler{"log", "Common logarithm of x", 1, func(a []*decimal.Big) ([]*decimal.Big, int, error) {
+			z := ctx.Log10(big(), a[0])
 			return []*decimal.Big{z}, 1, nil
 		}},
 

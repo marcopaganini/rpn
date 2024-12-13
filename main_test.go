@@ -142,6 +142,10 @@ func TestRPN(t *testing.T) {
 		{input: "rad 3 sqr atan", want: big().Quo(ctx.Pi(big()), bigUint(3))},          // Pi / 3
 		{input: "deg 1 180 * PI / atan", want: big().Quo(ctx.Pi(big()), bigUint(4))},   // Pi / 4
 
+		// Log functions
+		{input: "c E ln", want: bigUint(1)},
+		{input: "c 1000 log", want: bigUint(3)},
+
 		// Bitwise operations and base input modes.
 		{input: "0x00ff 0xff00 or", want: bigUint(0xffff)},
 		{input: "0x0ff0 and", want: bigUint(0x0ff0)},
@@ -187,7 +191,6 @@ func TestRPN(t *testing.T) {
 			}
 			got := decimal.WithPrecision(precision).Set(stack.top())
 			want := decimal.WithPrecision(precision).Set(tt.want)
-
 			if got.CmpTotal(want) != 0 {
 				t.Fatalf("diff: input: %s, want: %s, got: %s", tt.input, want, got)
 			}
