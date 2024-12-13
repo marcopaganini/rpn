@@ -78,14 +78,7 @@ func calc(stack *stackType, cmd string) error {
 		rl   *readline.Instance
 	)
 
-	ctx := decimal.Context{
-		Precision:     6144,
-		RoundingMode:  decimal.ToNearestEven,
-		OperatingMode: decimal.GDA,
-		Traps:         ^(decimal.Inexact | decimal.Rounded | decimal.Subnormal),
-		MaxScale:      6144,
-		MinScale:      -6143,
-	}
+	ctx := decimal.Context128
 
 	// Single command execution?
 	single := (cmd != "")
