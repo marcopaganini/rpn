@@ -5,16 +5,13 @@ jobs:
     name: lint
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: 1.22.x
-          check-latest: true
-      - name: Checkout repo
-        uses: actions/checkout@v3
+          go-version: stable
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v3
+        uses: golangci/golangci-lint-action@v8
         with:
-          # Disable errcheck (too noisy) for now.
-          # TODO: improve this by disabling only problematic regexps.
-          args: -D errcheck
+          version: v2.1

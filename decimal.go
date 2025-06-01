@@ -128,13 +128,13 @@ func formatNumber(ctx decimal.Context, n *decimal.Big, base, decimals int) strin
 		}
 	}
 
-	switch {
-	case base == 2:
-		buf.WriteString(fmt.Sprintf("0b%b%s", n64, suffix))
-	case base == 8:
-		buf.WriteString(fmt.Sprintf("0%o%s", n64, suffix))
-	case base == 16:
-		buf.WriteString(fmt.Sprintf("0x%x%s", n64, suffix))
+	switch base {
+	case 2:
+		fmt.Fprintf(buf, "0b%b%s", n64, suffix)
+	case 8:
+		fmt.Fprintf(buf, "0%o%s", n64, suffix)
+	case 16:
+		fmt.Fprintf(buf, "0x%x%s", n64, suffix)
 	default:
 		h := commafWithDigits(n, decimals)
 		// Only print humanized format when it differs from original value.

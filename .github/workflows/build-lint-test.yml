@@ -9,8 +9,7 @@ jobs:
       - name: Setup Go compiler
         uses: actions/setup-go@v5
         with:
-          go-version: 1.22.x
-          check-latest: true
+          go-version: stable
       - name: Build binary
         run: |
           go build
