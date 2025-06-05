@@ -287,7 +287,7 @@ func newOpsType(ctx decimal.Context, stack *stackType) *opsType {
 		ophandler{"GB", "Gigabyte", 0, func(_ []*decimal.Big) ([]*decimal.Big, int, error) {
 			return []*decimal.Big{ctx.Pow(big(), bigUint(10), bigUint(9))}, 0, nil
 		}},
-		ophandler{"MB", "Terabyte", 0, func(_ []*decimal.Big) ([]*decimal.Big, int, error) {
+		ophandler{"TB", "Terabyte", 0, func(_ []*decimal.Big) ([]*decimal.Big, int, error) {
 			return []*decimal.Big{ctx.Pow(big(), bigUint(10), bigUint(12))}, 0, nil
 		}},
 		ophandler{"KIB", "Kibibyte", 0, func(_ []*decimal.Big) ([]*decimal.Big, int, error) {
